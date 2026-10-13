@@ -1,0 +1,401 @@
+<section class="hero-section">
+  <div class="wrap hero-inner">
+    <div class="hero-badge-row">
+      <span class="badge badge-indigo">Zero Row Storage</span>
+      <span class="badge badge-emerald">Strict Read-Only Verification</span>
+      <span class="badge badge-outline">MySQL 5.7+ &amp; 8.0+</span>
+    </div>
+
+    <h1 class="hero-title">
+      Ask your MySQL database in plain English.<br>
+      Get verified SQL and instant rows.
+    </h1>
+
+    <p class="hero-subtitle">
+      Give business teams instant data access without bottlenecking engineering. Connect a read-only user in 60 seconds. We index your schema and lookup enums—your customer data never touches our storage.
+    </p>
+
+    <div class="hero-cta-group">
+      <a href="/signup" class="button button-lg primary">Start 30-Question Free Trial &rarr;</a>
+      <a href="#demo" class="button button-lg ghost">Inspect Live Preview</a>
+    </div>
+
+    <div class="hero-trust-bar">
+      <div class="trust-item">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#15803d" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+        <span>Automatic write privilege probe</span>
+      </div>
+      <div class="trust-item">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#15803d" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+        <span>AES-256-GCM encrypted credentials</span>
+      </div>
+      <div class="trust-item">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#15803d" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+        <span>No credit card required for trial</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Interactive Product Workbench Preview -->
+<section id="demo" class="demo-section">
+  <div class="wrap">
+    <div class="workbench-window">
+      <div class="workbench-header">
+        <div class="window-controls">
+          <span class="control red"></span>
+          <span class="control yellow"></span>
+          <span class="control green"></span>
+        </div>
+        <div class="workbench-title">AskMySQL Studio &mdash; Production Workspace Preview</div>
+        <div class="workbench-status">
+          <span class="pulse-dot"></span>
+          <span>Read-Only User Verified</span>
+        </div>
+      </div>
+
+      <div class="workbench-body">
+        <div class="workbench-prompt-box">
+          <div class="prompt-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+          </div>
+          <div class="prompt-text">
+            "Which 5 customers generated the highest total revenue this quarter, and what is their current plan status?"
+          </div>
+          <span class="prompt-meta">Synthesized in 1.4s</span>
+        </div>
+
+        <div class="workbench-results">
+          <div class="workbench-telemetry">
+            <span class="telemetry-pill"><strong>Path:</strong> Small Schema Full Context (4.8k chars)</span>
+            <span class="telemetry-pill"><strong>Model:</strong> Claude 3.5 Sonnet</span>
+            <span class="telemetry-pill"><strong>MySQL Latency:</strong> 11ms</span>
+            <span class="telemetry-pill"><strong>Rows:</strong> 5</span>
+          </div>
+
+          <!-- Code Card -->
+          <div class="workbench-code-card">
+            <div class="code-card-header">
+              <div class="code-card-left">
+                <span class="code-dot"></span>
+                <span>Generated Read-Only SQL</span>
+              </div>
+              <span class="code-card-badge">Verified Safe</span>
+            </div>
+            <pre class="code-block"><code><span class="kw">SELECT</span>
+  u.id <span class="kw">AS</span> customer_id,
+  u.company_name,
+  s.plan_code <span class="kw">AS</span> current_plan,
+  <span class="fn">COUNT</span>(o.id) <span class="kw">AS</span> orders_count,
+  <span class="fn">SUM</span>(o.amount_usd) <span class="kw">AS</span> total_revenue_usd
+<span class="kw">FROM</span> users u
+<span class="kw">JOIN</span> subscriptions s <span class="kw">ON</span> s.user_id = u.id
+<span class="kw">JOIN</span> orders o <span class="kw">ON</span> o.user_id = u.id
+<span class="kw">WHERE</span> o.status = <span class="str">'paid'</span>
+  <span class="kw">AND</span> o.created_at &gt;= <span class="str">'2026-07-01'</span>
+<span class="kw">GROUP BY</span> u.id, u.company_name, s.plan_code
+<span class="kw">ORDER BY</span> total_revenue_usd <span class="kw">DESC</span>
+<span class="kw">LIMIT</span> <span class="num">5</span>;</code></pre>
+          </div>
+
+          <!-- Tabular Preview -->
+          <div class="workbench-table-card">
+            <div class="table-card-header">
+              <span>Execution Output</span>
+              <span class="table-rows-count">5 rows returned</span>
+            </div>
+            <div class="table-scroll">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>customer_id</th>
+                    <th>company_name</th>
+                    <th>current_plan</th>
+                    <th>orders_count</th>
+                    <th>total_revenue_usd</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><code>usr_9824</code></td>
+                    <td>Acme Logistics Global</td>
+                    <td><span class="status-badge enterprise">scale</span></td>
+                    <td>142</td>
+                    <td>$42,850.00</td>
+                  </tr>
+                  <tr>
+                    <td><code>usr_7719</code></td>
+                    <td>CloudScale Networks</td>
+                    <td><span class="status-badge enterprise">scale</span></td>
+                    <td>98</td>
+                    <td>$31,200.00</td>
+                  </tr>
+                  <tr>
+                    <td><code>usr_4102</code></td>
+                    <td>Apex Retail Systems</td>
+                    <td><span class="status-badge growth">growth</span></td>
+                    <td>64</td>
+                    <td>$18,440.00</td>
+                  </tr>
+                  <tr>
+                    <td><code>usr_5591</code></td>
+                    <td>Beacon Health Analytics</td>
+                    <td><span class="status-badge growth">growth</span></td>
+                    <td>41</td>
+                    <td>$12,980.00</td>
+                  </tr>
+                  <tr>
+                    <td><code>usr_1028</code></td>
+                    <td>Nordic FinTech AS</td>
+                    <td><span class="status-badge starter">starter</span></td>
+                    <td>27</td>
+                    <td>$8,650.00</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Technical Architecture & Security -->
+<section id="architecture" class="section-container">
+  <div class="wrap">
+    <div class="section-header">
+      <span class="section-kicker">Architecture &amp; Reliability</span>
+      <h2 class="section-title">Designed for Enterprise Security &amp; Accuracy</h2>
+      <p class="section-desc">
+        We solved the two biggest problems in NL-to-SQL: catastrophic hallucinations on massive schemas, and unauthorized write privileges.
+      </p>
+    </div>
+
+    <div class="feature-grid">
+      <div class="feature-card">
+        <div class="feature-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+          </svg>
+        </div>
+        <h3 class="feature-title">Strict Read-Only User Probe</h3>
+        <p class="feature-text">
+          Before saving your database configuration, our connection probe issues active write tests. If your MySQL user holds <code>INSERT</code>, <code>UPDATE</code>, <code>DELETE</code>, or <code>DROP</code> privileges, registration is rejected immediately.
+        </p>
+        <div class="code-snippet-small">
+          <code>CREATE USER 'nlq_ro'@'%' IDENTIFIED BY '...';<br>GRANT SELECT ON db.* TO 'nlq_ro'@'%';</code>
+        </div>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <polyline points="12 6 12 12 14 14"></polyline>
+          </svg>
+        </div>
+        <h3 class="feature-title">Dual-Engine Schema Routing</h3>
+        <p class="feature-text">
+          Databases under 30k characters receive full-context reasoning across all tables for flawless multi-table joins. Large schemas (>30k characters) use Qdrant vector retrieval to dynamically inject only the relevant tables.
+        </p>
+        <ul class="feature-bullets">
+          <li><strong>Small Path (&le;30k chars):</strong> Global foreign-key inference</li>
+          <li><strong>Large Path (&gt;30k chars):</strong> Cosine vector table retrieval</li>
+        </ul>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+          </svg>
+        </div>
+        <h3 class="feature-title">AES-256-GCM Credential Vault</h3>
+        <p class="feature-text">
+          Database passwords are encrypted using authenticated AES-256-GCM before reaching disk. Decryption happens solely in memory during authorized query execution and is immediately garbage-collected.
+        </p>
+        <ul class="feature-bullets">
+          <li>Zero persistent plaintext credentials</li>
+          <li>Automatic rotation ready</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- How It Works 3-Step Flow -->
+<section id="how-it-works" class="section-container bg-subtle">
+  <div class="wrap">
+    <div class="section-header">
+      <span class="section-kicker">Deployment Workflow</span>
+      <h2 class="section-title">Up and Running in 3 Minutes</h2>
+      <p class="section-desc">No complex ETL pipelines or data warehousing required.</p>
+    </div>
+
+    <div class="step-grid">
+      <div class="step-card">
+        <div class="step-number">01</div>
+        <h3 class="step-title">Provision Read-Only User</h3>
+        <p class="step-text">
+          Create a dedicated MySQL user with <code>GRANT SELECT</code> privileges only on your read replica or production instance.
+        </p>
+      </div>
+
+      <div class="step-card">
+        <div class="step-number">02</div>
+        <h3 class="step-title">Auto-Index Schema</h3>
+        <p class="step-text">
+          AskMySQL inspects table structures, column definitions, and foreign keys. Schemas are categorized and indexed in seconds.
+        </p>
+      </div>
+
+      <div class="step-card">
+        <div class="step-number">03</div>
+        <h3 class="step-title">Query &amp; Export</h3>
+        <p class="step-text">
+          Ask business questions in plain English. Review the synthesized SQL, inspect returned rows, and export results directly to CSV.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Pricing Section -->
+<section id="pricing" class="section-container">
+  <div class="wrap">
+    <div class="section-header">
+      <span class="section-kicker">Transparent Pricing</span>
+      <h2 class="section-title">Plans that scale with your database</h2>
+      <p class="section-desc">
+        Your measured schema size selects the fitting plan. Every workspace starts with 30 free questions.
+      </p>
+    </div>
+
+    <div class="pricing-grid">
+      <!-- Starter Tier -->
+      <div class="pricing-card">
+        <div class="pricing-card-header">
+          <h3 class="pricing-tier-name">Starter</h3>
+          <p class="pricing-tier-desc">For smaller applications and startups.</p>
+          <div class="pricing-price">
+            <span class="currency">$</span>
+            <span class="amount">39</span>
+            <span class="period">/ month</span>
+          </div>
+        </div>
+
+        <ul class="pricing-features">
+          <li><strong>150</strong> verified queries / month</li>
+          <li>Up to <strong>30,000</strong> schema characters</li>
+          <li>1 MySQL database connection</li>
+          <li>Full-context schema inference</li>
+          <li>CSV data exports</li>
+          <li>Email support</li>
+        </ul>
+
+        <div class="pricing-action">
+          <a href="/signup" class="button button-block ghost">Start 30-Question Trial</a>
+        </div>
+      </div>
+
+      <!-- Growth Tier (Recommended) -->
+      <div class="pricing-card highlighted">
+        <div class="pricing-popular-badge">Most Popular</div>
+        <div class="pricing-card-header">
+          <h3 class="pricing-tier-name">Growth</h3>
+          <p class="pricing-tier-desc">For scaling products with complex schemas.</p>
+          <div class="pricing-price">
+            <span class="currency">$</span>
+            <span class="amount">129</span>
+            <span class="period">/ month</span>
+          </div>
+        </div>
+
+        <ul class="pricing-features">
+          <li><strong>400</strong> verified queries / month</li>
+          <li>Up to <strong>120,000</strong> schema characters</li>
+          <li>1 MySQL database connection</li>
+          <li>Vector retrieval via Qdrant</li>
+          <li>Query execution telemetry</li>
+          <li>CSV data exports</li>
+          <li>Priority support</li>
+        </ul>
+
+        <div class="pricing-action">
+          <a href="/signup" class="button button-block primary">Start 30-Question Trial</a>
+        </div>
+      </div>
+
+      <!-- Scale Tier -->
+      <div class="pricing-card">
+        <div class="pricing-card-header">
+          <h3 class="pricing-tier-name">Scale</h3>
+          <p class="pricing-tier-desc">For enterprise schemas and high query volumes.</p>
+          <div class="pricing-price">
+            <span class="currency">$</span>
+            <span class="amount">349</span>
+            <span class="period">/ month</span>
+          </div>
+        </div>
+
+        <ul class="pricing-features">
+          <li><strong>2,000</strong> verified queries / month</li>
+          <li>Over <strong>120,000+</strong> schema characters</li>
+          <li>Up to 3 MySQL database connections</li>
+          <li>Dedicated vector indexing partition</li>
+          <li>Execution latency SLA</li>
+          <li>Dedicated Slack channel support</li>
+        </ul>
+
+        <div class="pricing-action">
+          <a href="/signup" class="button button-block ghost">Start 30-Question Trial</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FAQ Section -->
+<section id="faq" class="section-container bg-subtle">
+  <div class="wrap wrap-narrow">
+    <div class="section-header">
+      <span class="section-kicker">Engineering FAQ</span>
+      <h2 class="section-title">Frequently Asked Questions</h2>
+    </div>
+
+    <div class="faq-list">
+      <div class="faq-item">
+        <h4 class="faq-question">Can AskMySQL accidentally modify, update, or drop tables?</h4>
+        <p class="faq-answer">
+          No. AskMySQL enforces read-only access at two independent layers. First, before any connection is saved, our probe checks MySQL grants and actively tests that write operations fail. Second, the generated SQL is restricted to read-only <code>SELECT</code> statements.
+        </p>
+      </div>
+
+      <div class="faq-item">
+        <h4 class="faq-question">Do our customer rows leave our database?</h4>
+        <p class="faq-answer">
+          No. AskMySQL indexes only metadata: table names, column names, column data types, foreign key relationships, and short categorical lookup values (e.g. status codes like 'active', 'pending'). Your business rows are queried at runtime and sent directly to your browser session; they are never saved in our database.
+        </p>
+      </div>
+
+      <div class="faq-item">
+        <h4 class="faq-question">Can we connect AskMySQL to a MySQL read replica?</h4>
+        <p class="faq-answer">
+          Yes. In fact, connecting to an Aurora, RDS, or CloudSQL read replica is our recommended production architecture. This guarantees zero contention on your primary transactional write nodes.
+        </p>
+      </div>
+
+      <div class="faq-item">
+        <h4 class="faq-question">What happens if our database schema changes?</h4>
+        <p class="faq-answer">
+          You can re-index your schema at any time with a single click in the <strong>Database Source</strong> tab. Re-indexing takes 2 to 10 seconds depending on schema size.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>

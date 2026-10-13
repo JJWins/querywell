@@ -1,0 +1,91 @@
+<div class="studio-container">
+  <div class="page-title-row">
+    <div>
+      <h1 class="page-title">API Keys</h1>
+      <p class="page-desc">
+        Call <code>POST /api/ask</code> from scripts with a bearer token. Keys use this workspace’s monthly query quota and the same read-only database.
+      </p>
+    </div>
+  </div>
+
+  <div id="error" class="form-error" hidden></div>
+
+  <div class="two-col-layout">
+    <div>
+      <div class="panel">
+        <div class="panel-header">
+          <h2 class="panel-title">Create a key</h2>
+        </div>
+        <form id="key-form">
+          <div class="form-group">
+            <label for="key-name" class="form-label">Name</label>
+            <input id="key-name" name="name" class="form-input" type="text" maxlength="80" required placeholder="Production scripts">
+          </div>
+          <button class="button primary" type="submit">Create key</button>
+        </form>
+      </div>
+
+      <div class="code-box">
+        <div class="code-box-header">
+          <span>curl</span>
+          <button id="copy-curl" class="button button-sm ghost" type="button">Copy</button>
+        </div>
+        <pre><code id="snippet-curl"></code></pre>
+      </div>
+
+      <div class="code-box">
+        <div class="code-box-header">
+          <span>Python</span>
+          <button id="copy-python" class="button button-sm ghost" type="button">Copy</button>
+        </div>
+        <pre><code id="snippet-python"></code></pre>
+      </div>
+    </div>
+
+    <div>
+      <div class="panel">
+        <div class="panel-header">
+          <h2 class="panel-title">Active keys</h2>
+        </div>
+        <p class="panel-text">The secret is shown once, when the key is created. This list keeps only the prefix.</p>
+
+        <div class="table-scroll">
+          <table class="data-table" id="key-table">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Prefix</th>
+                <th>Created</th>
+                <th>Last used</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="key-rows">
+              {{#each keys}}
+                <tr data-key-id="{{id}}">
+                  <td>{{name}}</td>
+                  <td><code>{{prefix}}</code></td>
+                  <td>{{createdAt}}</td>
+                  <td>{{#if lastUsedAt}}{{lastUsedAt}}{{else}}Never{{/if}}</td>
+                  <td><button type="button" class="button button-sm ghost revoke-key" data-id="{{id}}">Revoke</button></td>
+                </tr>
+              {{/each}}
+            </tbody>
+          </table>
+        </div>
+        <p id="key-empty" class="panel-text" {{#if keys.length}}hidden{{/if}}>No active keys yet.</p>
+      </div>
+
+      <div id="key-secret" class="panel secret-panel" hidden>
+        <div class="panel-header">
+          <h2 class="panel-title">Copy this key now</h2>
+        </div>
+        <p class="panel-text">This is the only time the full key is shown. Store it with the rest of your secrets.</p>
+        <div class="secret-row">
+          <code id="key-secret-value"></code>
+          <button id="copy-secret" class="button button-sm primary" type="button">Copy key</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

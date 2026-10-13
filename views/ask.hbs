@@ -1,0 +1,96 @@
+<div class="studio-container">
+  <div class="page-title-row">
+    <div>
+      <h1 class="page-title">Natural Language SQL Studio</h1>
+      <p class="page-desc">
+        Ask business and analytics questions in plain English. We synthesize verified read-only SQL, execute against your MySQL replica, and stream back results.
+      </p>
+    </div>
+    <div class="page-actions">
+      <a href="/connect" class="button ghost">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <ellipse cx="12" cy="5" rx="9" ry="3"></ellipse>
+          <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"></path>
+          <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path>
+        </svg>
+        <span>Database Settings</span>
+      </a>
+    </div>
+  </div>
+
+  <div id="error" class="form-error" hidden></div>
+
+  <!-- Unconnected Alert -->
+  <div id="need-connect" class="panel alert-panel {{#if connection}}hidden{{/if}}" {{#if connection}}hidden{{/if}}>
+    <div class="alert-icon">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="10"></circle>
+        <line x1="12" y1="8" x2="12" y2="12"></line>
+        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+      </svg>
+    </div>
+    <div class="alert-content">
+      <h4 class="alert-title">No MySQL Connection Configured</h4>
+      <p class="alert-desc">You need to connect a database and index its schema before querying.</p>
+    </div>
+    <a href="/connect" class="button button-sm primary">Connect Database &rarr;</a>
+  </div>
+
+  <!-- Query Console Panel -->
+  <div class="panel studio-console-panel">
+    <form id="ask-form" class="ask-form" novalidate>
+      <div class="console-header">
+        <label for="question" class="console-label">
+          <span>Question / Prompt</span>
+          <span class="console-sublabel">Generates read-only SQL &bull; Zero row storage</span>
+        </label>
+        <span class="badge badge-indigo">Auto-Routed</span>
+      </div>
+
+      <div class="textarea-wrapper">
+        <textarea 
+          id="question" 
+          name="question" 
+          class="console-textarea" 
+          rows="3" 
+          placeholder="e.g. Which customers placed orders this month but haven't received fulfillment?" 
+          required
+        ></textarea>
+      </div>
+
+      <div class="prompt-chips-row">
+        <span class="chips-label">Quick Prompts:</span>
+        <div class="chips-list">
+          <button type="button" class="query-chip" data-prompt="How many orders have a paid status?">
+            How many orders have a paid status?
+          </button>
+          <button type="button" class="query-chip" data-prompt="List 5 most recent orders with status">
+            List 5 most recent orders with status
+          </button>
+          <button type="button" class="query-chip" data-prompt="Count all customers and orders">
+            Count all customers and orders
+          </button>
+        </div>
+      </div>
+
+      <div class="console-footer">
+        <div class="shortcut-hint">
+          <kbd>Ctrl</kbd> + <kbd>Enter</kbd> to run
+        </div>
+        <button type="submit" class="button button-lg primary">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="22" y1="2" x2="11" y2="13"></line>
+            <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+          </svg>
+          <span>Run Query</span>
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Realtime Stepper Timeline -->
+  <ol id="progress" class="stepper-list"></ol>
+
+  <!-- Query Results Workbench Card -->
+  <div id="answer" class="panel studio-results-panel" hidden></div>
+</div>

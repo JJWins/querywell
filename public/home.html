@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AskMySQL — AI Natural Language SQL Engine for MySQL</title>
+  <link rel="stylesheet" href="/app.css">
+</head>
+<body>
+  <main class="wrap wide">
+    <!-- Navbar -->
+    <header class="site">
+      <div class="brand-group">
+        <a class="mark" href="/">
+          <span class="brand-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <ellipse cx="12" cy="5" rx="9" ry="3"></ellipse>
+              <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"></path>
+              <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path>
+            </svg>
+          </span>
+          <span>AskMySQL</span>
+        </a>
+        <span class="badge badge-emerald">
+          <span class="badge-dot"></span> Read-Only Enforced
+        </span>
+      </div>
+      <nav>
+        <a class="quiet" href="/signin">Sign in</a>
+        <a class="button" href="/signup">Start Free Trial</a>
+      </nav>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero">
+      <div class="hero-badge-wrap">
+        <span class="badge badge-indigo">Zero Row Storage • Production Safe</span>
+      </div>
+      <h1>
+        Ask your MySQL database questions. <br>
+        <span class="hero-highlight">Get instant SQL and live rows.</span>
+      </h1>
+      <p class="lede">
+        Empower your team to query data in plain English. Connect a read-only MySQL user in seconds.
+        We index your schema and lookup terms—your actual database records never leave your infrastructure.
+      </p>
+      <div class="hero-actions">
+        <a class="button button-lg" href="/signup">Start 30-Question Free Trial &rarr;</a>
+        <a class="button ghost button-lg" href="#how-it-works">See How It Works</a>
+      </div>
+      <div class="trust-row">
+        <div class="trust-item">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20 6 9 17 4 12"></polyline>
+          </svg>
+          <span>Strict read-only verification</span>
+        </div>
+        <div class="trust-item">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20 6 9 17 4 12"></polyline>
+          </svg>
+          <span>AES-256 GCM encrypted credentials</span>
+        </div>
+        <div class="trust-item">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20 6 9 17 4 12"></polyline>
+          </svg>
+          <span>Automatic query quota protection</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Interactive Mockup Preview -->
+    <section class="preview-mockup">
+      <div class="mockup-header">
+        <div class="mockup-dots">
+          <div class="mockup-dot"></div>
+          <div class="mockup-dot"></div>
+          <div class="mockup-dot"></div>
+        </div>
+        <div class="mockup-title">AskMySQL Query Workspace • Live Sample</div>
+        <span class="badge badge-emerald">Connected</span>
+      </div>
+      <div class="mockup-body">
+        <div class="mockup-prompt-box">
+          <span>&ldquo;How many orders were completed and paid this month?&rdquo;</span>
+          <span class="badge badge-indigo">Generated in 1.8s</span>
+        </div>
+        <div class="mockup-sql-box">
+          <span class="sql-keyword">SELECT</span> <span class="sql-keyword">COUNT</span>(*) <span class="sql-keyword">AS</span> completed_orders, <span class="sql-keyword">SUM</span>(o.total_amount) <span class="sql-keyword">AS</span> revenue<br>
+          <span class="sql-keyword">FROM</span> orders o<br>
+          <span class="sql-keyword">JOIN</span> order_status s <span class="sql-keyword">ON</span> o.status_id = s.id<br>
+          <span class="sql-keyword">WHERE</span> s.label = <span class="sql-string">'Paid'</span> <span class="sql-keyword">AND</span> o.created_at &gt;= <span class="sql-string">'2026-10-01'</span>;
+        </div>
+        <div class="mockup-table">
+          <table>
+            <thead>
+              <tr>
+                <th>completed_orders</th>
+                <th>revenue</th>
+                <th>currency</th>
+                <th>execution_time</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>142</strong></td>
+                <td>$38,450.00</td>
+                <td>USD</td>
+                <td>12ms</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- How It Works Section -->
+    <section id="how-it-works" class="section">
+      <div class="section-head">
+        <span class="badge badge-indigo">Simple 3-Step Flow</span>
+        <h2>How AskMySQL Works</h2>
+        <p class="lede">From zero to answering business questions in under 2 minutes.</p>
+      </div>
+      <ol class="steps">
+        <li>
+          <div class="step-num">1</div>
+          <h3>Connect</h3>
+          <p>Provide read-only credentials for your database. We verify that the user cannot perform write or drop operations before saving.</p>
+        </li>
+        <li>
+          <div class="step-num">2</div>
+          <h3>Index</h3>
+          <p>We read table names, column descriptions, and short lookup values into vector embeddings. Customer rows remain on your server.</p>
+        </li>
+        <li>
+          <div class="step-num">3</div>
+          <h3>Ask &amp; Inspect</h3>
+          <p>Ask in English. Our engine retrieves the exact schema needed, synthesizes precise SQL, executes the query, and formats the rows.</p>
+        </li>
+      </ol>
+    </section>
+
+    <!-- Architecture & Security Section -->
+    <section class="section">
+      <div class="section-head">
+        <span class="badge badge-emerald">Engine Architecture</span>
+        <h2>Built for Database Security &amp; Speed</h2>
+        <p class="lede">Intelligent routing that adapts to your schema dimensions.</p>
+      </div>
+      <div class="security-grid">
+        <div class="security-card">
+          <div class="security-card-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+            </svg>
+          </div>
+          <h3>Read-Only Enforced</h3>
+          <p class="note">Our connection probe rejects any user granted INSERT, UPDATE, DELETE, or DROP privileges. Safe for production read-replicas.</p>
+        </div>
+        <div class="security-card">
+          <div class="security-card-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+            </svg>
+          </div>
+          <h3>Encrypted Secrets</h3>
+          <p class="note">Database passwords are encrypted using authenticated AES-256-GCM. Decryption occurs only in memory per query execution.</p>
+        </div>
+        <div class="security-card">
+          <div class="security-card-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+            </svg>
+          </div>
+          <h3>Adaptive Routing</h3>
+          <p class="note">Schemas under 30,000 characters receive full-context reasoning. Larger schemas leverage vector search to inject only relevant tables.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Pricing Section -->
+    <section id="pricing" class="section">
+      <div class="section-head">
+        <span class="badge badge-indigo">Transparent Pricing</span>
+        <h2>Choose Your Plan</h2>
+        <p class="lede">Your measured schema size automatically determines the required plan.</p>
+      </div>
+      <ul class="plans">
+        <!-- Starter -->
+        <li>
+          <div class="plan-header">
+            <h3>Starter</h3>
+            <p class="note">For small databases (&le; 30,000 schema characters)</p>
+          </div>
+          <div class="price-wrap">
+            <span class="price">$39</span>
+            <span class="price-sub">/ month</span>
+          </div>
+          <div class="plan-features">
+            <div class="plan-feature-item">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+              <span><strong>150 questions</strong> per month</span>
+            </div>
+            <div class="plan-feature-item">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+              <span>1 MySQL database</span>
+            </div>
+            <div class="plan-feature-item">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+              <span>Full-context schema inference</span>
+            </div>
+          </div>
+          <a class="button ghost" href="/signup">Start Free Trial</a>
+          <p class="plan-note">30 free questions included</p>
+        </li>
+
+        <!-- Growth (Featured) -->
+        <li class="featured">
+          <div class="plan-badge">Most Popular</div>
+          <div class="plan-header">
+            <h3>Growth</h3>
+            <p class="note">For medium databases (&le; 120,000 schema characters)</p>
+          </div>
+          <div class="price-wrap">
+            <span class="price">$129</span>
+            <span class="price-sub">/ month</span>
+          </div>
+          <div class="plan-features">
+            <div class="plan-feature-item">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+              <span><strong>400 questions</strong> per month</span>
+            </div>
+            <div class="plan-feature-item">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+              <span>1 MySQL database</span>
+            </div>
+            <div class="plan-feature-item">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+              <span>Vector retrieval + compact schema</span>
+            </div>
+          </div>
+          <a class="button" href="/signup">Start Free Trial</a>
+          <p class="plan-note">30 free questions included</p>
+        </li>
+
+        <!-- Scale -->
+        <li>
+          <div class="plan-header">
+            <h3>Scale</h3>
+            <p class="note">For enterprise databases (&gt; 120,000 characters)</p>
+          </div>
+          <div class="price-wrap">
+            <span class="price">$349</span>
+            <span class="price-sub">/ month</span>
+          </div>
+          <div class="plan-features">
+            <div class="plan-feature-item">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+              <span><strong>2,000 questions</strong> per month</span>
+            </div>
+            <div class="plan-feature-item">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+              <span>Up to 3 MySQL databases</span>
+            </div>
+            <div class="plan-feature-item">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+              <span>Dedicated vector retrieval</span>
+            </div>
+          </div>
+          <a class="button ghost" href="/signup">Start Free Trial</a>
+          <p class="plan-note">30 free questions included</p>
+        </li>
+      </ul>
+    </section>
+
+    <!-- Footer -->
+    <footer class="site-footer">
+      <div>&copy; 2026 AskMySQL Inc. All rights reserved.</div>
+      <div>Security: AES-256 GCM • Read-Only Verified • Zero Data Retained</div>
+    </footer>
+  </main>
+</body>
+</html>

@@ -1,0 +1,21 @@
+{
+  "name": "nlp-saas",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "start": "node src/http/server.js",
+    "prove:paths": "node scripts/prove-paths.js"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.128.0",
+    "@qdrant/js-client-rest": "^1.18.0",
+    "dotenv": "^18.0.3",
+    "handlebars": "^4.7.10",
+    "mysql2": "^3.24.4",
+    "stripe": "^23.0.0"
+  }
+}

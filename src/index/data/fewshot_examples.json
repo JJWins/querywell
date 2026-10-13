@@ -1,0 +1,218 @@
+[
+  {
+    "module": "proposal",
+    "question": "List the most recently updated proposal-development proposals.",
+    "sql": "SELECT p.PROPOSAL_ID, p.TITLE, p.IP_NUMBER, p.STATUS_CODE, p.UPDATE_TIMESTAMP FROM EPS_PROPOSAL p ORDER BY p.UPDATE_TIMESTAMP DESC LIMIT 20",
+    "explanation": "EPS_PROPOSAL is the canonical proposal-development table."
+  },
+  {
+    "module": "proposal",
+    "question": "Find proposal-development proposals with a supplied status code.",
+    "sql": "SELECT p.PROPOSAL_ID, p.TITLE, p.STATUS_CODE FROM EPS_PROPOSAL p WHERE p.STATUS_CODE = '1' ORDER BY p.TITLE",
+    "explanation": "Uses EPS_PROPOSAL.STATUS_CODE; labels live in EPS_PROPOSAL_STATUS."
+  },
+  {
+    "module": "proposal",
+    "question": "List proposal-development proposals submitted between two dates.",
+    "sql": "SELECT p.PROPOSAL_ID, p.TITLE, p.SUBMISSION_DATE FROM EPS_PROPOSAL p WHERE p.SUBMISSION_DATE BETWEEN '2024-01-01' AND '2024-12-31' ORDER BY p.SUBMISSION_DATE",
+    "explanation": "SUBMISSION_DATE is on EPS_PROPOSAL."
+  },
+  {
+    "module": "proposal",
+    "question": "How many proposal-development proposals are there for each status?",
+    "sql": "SELECT ps.STATUS_CODE, ps.DESCRIPTION, COUNT(p.PROPOSAL_ID) AS proposal_count FROM EPS_PROPOSAL_STATUS ps LEFT JOIN EPS_PROPOSAL p ON p.STATUS_CODE = ps.STATUS_CODE GROUP BY ps.STATUS_CODE, ps.DESCRIPTION ORDER BY ps.DESCRIPTION",
+    "explanation": "Join EPS_PROPOSAL to EPS_PROPOSAL_STATUS on STATUS_CODE."
+  },
+  {
+    "module": "proposal",
+    "question": "Show proposals associated with a person named Will Smith.",
+    "sql": "SELECT DISTINCT p.PROPOSAL_ID, p.PROPOSAL_NUMBER, p.TITLE FROM PROPOSAL p JOIN PROPOSAL_PERSONS pp ON pp.PROPOSAL_ID = p.PROPOSAL_ID WHERE LOWER(pp.FULL_NAME) LIKE '%will smith%' ORDER BY p.PROPOSAL_NUMBER",
+    "explanation": "Ambiguous 'proposals' defaults to institutional PROPOSAL + PROPOSAL_PERSONS.FULL_NAME. Do not use ERA_PROPOSAL_PERSON_ROLES."
+  },
+  {
+    "module": "proposal",
+    "question": "List proposal-development proposals and their PIs.",
+    "sql": "SELECT p.PROPOSAL_ID, p.TITLE, pp.PERSON_ID, pp.FULL_NAME FROM EPS_PROPOSAL p JOIN EPS_PROPOSAL_PERSONS pp ON pp.PROPOSAL_ID = p.PROPOSAL_ID WHERE pp.PI_FLAG = 'Y' ORDER BY p.TITLE",
+    "explanation": "PI_FLAG on EPS_PROPOSAL_PERSONS marks the PI."
+  },
+  {
+    "module": "proposal",
+    "question": "List all people and roles on a specified proposal-development proposal.",
+    "sql": "SELECT pp.PROPOSAL_ID, pp.PERSON_ID, pp.ROLODEX_ID, pp.FULL_NAME, pp.PROP_PERSON_ROLE_ID, pp.PI_FLAG, pp.PROJECT_ROLE FROM EPS_PROPOSAL_PERSONS pp WHERE pp.PROPOSAL_ID = 70 ORDER BY pp.PI_FLAG DESC, pp.FULL_NAME",
+    "explanation": "People for a development proposal live in EPS_PROPOSAL_PERSONS."
+  },
+  {
+    "module": "proposal",
+    "question": "List institutional proposals with their proposal numbers and submission dates.",
+    "sql": "SELECT p.PROPOSAL_ID, p.PROPOSAL_NUMBER, p.SEQUENCE_NUMBER, p.TITLE, p.SUBMISSION_DATE FROM PROPOSAL p ORDER BY p.SUBMISSION_DATE DESC",
+    "explanation": "PROPOSAL is the canonical institutional proposal table."
+  },
+  {
+    "module": "proposal",
+    "question": "Find institutional proposals with a supplied status code.",
+    "sql": "SELECT p.PROPOSAL_ID, p.PROPOSAL_NUMBER, p.TITLE, p.STATUS_CODE FROM PROPOSAL p WHERE p.STATUS_CODE = '1' ORDER BY p.PROPOSAL_NUMBER",
+    "explanation": "Institutional status is PROPOSAL.STATUS_CODE."
+  },
+  {
+    "module": "proposal",
+    "question": "List institutional proposals submitted within a date range.",
+    "sql": "SELECT p.PROPOSAL_ID, p.PROPOSAL_NUMBER, p.TITLE, p.SUBMISSION_DATE FROM PROPOSAL p WHERE p.SUBMISSION_DATE BETWEEN '2024-01-01' AND '2024-12-31' ORDER BY p.SUBMISSION_DATE",
+    "explanation": "SUBMISSION_DATE is on PROPOSAL."
+  },
+  {
+    "module": "proposal",
+    "question": "List proposal-development proposals with their declared sponsors.",
+    "sql": "SELECT p.PROPOSAL_ID, p.TITLE, s.SPONSOR_CODE, s.SPONSOR_NAME FROM EPS_PROPOSAL p JOIN EPS_PROPOSAL_SPONSORS ps ON ps.PROPOSAL_ID = p.PROPOSAL_ID JOIN SPONSOR s ON s.SPONSOR_CODE = ps.SPONSOR_CODE ORDER BY p.TITLE, s.SPONSOR_NAME",
+    "explanation": "Declared sponsors are EPS_PROPOSAL_SPONSORS; names come from SPONSOR."
+  },
+  {
+    "module": "proposal",
+    "question": "Count institutional proposals by sponsor.",
+    "sql": "SELECT s.SPONSOR_CODE, s.SPONSOR_NAME, COUNT(DISTINCT p.PROPOSAL_ID) AS proposal_count FROM SPONSOR s JOIN PROPOSAL_SPONSORS ps ON ps.SPONSOR_CODE = s.SPONSOR_CODE JOIN PROPOSAL p ON p.PROPOSAL_ID = ps.PROPOSAL_ID GROUP BY s.SPONSOR_CODE, s.SPONSOR_NAME ORDER BY proposal_count DESC",
+    "explanation": "PROPOSAL_SPONSORS links institutional proposals to the SPONSOR master."
+  },
+  {
+    "module": "award",
+    "question": "List awards with a supplied status code.",
+    "sql": "SELECT a.AWARD_ID, a.AWARD_NUMBER, a.SEQUENCE_NUMBER, a.TITLE, a.STATUS_CODE FROM AWARD a WHERE a.STATUS_CODE = '1' ORDER BY a.AWARD_NUMBER, a.SEQUENCE_NUMBER DESC",
+    "explanation": "AWARD is the canonical award table."
+  },
+  {
+    "module": "award",
+    "question": "List awards effective within a date range.",
+    "sql": "SELECT a.AWARD_ID, a.AWARD_NUMBER, a.TITLE, a.AWARD_EFFECTIVE_DATE, a.FINAL_EXPIRATION_DATE FROM AWARD a WHERE a.AWARD_EFFECTIVE_DATE BETWEEN '2024-01-01' AND '2024-12-31' ORDER BY a.AWARD_EFFECTIVE_DATE",
+    "explanation": "Effective and expiration dates are on AWARD."
+  },
+  {
+    "module": "award",
+    "question": "Find awards associated with a person named Will Smith.",
+    "sql": "SELECT DISTINCT a.AWARD_ID, a.AWARD_NUMBER, a.TITLE, ap.PERSON_ID, ap.FULL_NAME FROM AWARD a JOIN AWARD_PERSONS ap ON ap.AWARD_ID = a.AWARD_ID WHERE LOWER(ap.FULL_NAME) LIKE '%will smith%' ORDER BY a.AWARD_NUMBER",
+    "explanation": "Canonical award people table is AWARD_PERSONS."
+  },
+  {
+    "module": "award",
+    "question": "List awards and their PIs.",
+    "sql": "SELECT a.AWARD_ID, a.AWARD_NUMBER, a.TITLE, ap.PERSON_ID, ap.FULL_NAME FROM AWARD a JOIN AWARD_PERSONS ap ON ap.AWARD_ID = a.AWARD_ID WHERE ap.PI_FLAG = 'Y' ORDER BY a.AWARD_NUMBER",
+    "explanation": "PI_FLAG on AWARD_PERSONS marks the PI."
+  },
+  {
+    "module": "award",
+    "question": "Which awards are linked to a specified institutional proposal number?",
+    "sql": "SELECT a.AWARD_ID, a.AWARD_NUMBER, a.TITLE, p.PROPOSAL_ID, p.PROPOSAL_NUMBER FROM AWARD a JOIN AWARD_FUNDING_PROPOSALS afp ON afp.AWARD_ID = a.AWARD_ID JOIN PROPOSAL p ON p.PROPOSAL_ID = afp.PROPOSAL_ID WHERE p.PROPOSAL_NUMBER = '1' AND afp.IS_ACTIVE = 'Y' ORDER BY a.AWARD_NUMBER",
+    "explanation": "AWARD_FUNDING_PROPOSALS links awards to institutional PROPOSAL."
+  },
+  {
+    "module": "award",
+    "question": "Count current awards by sponsor.",
+    "sql": "SELECT s.SPONSOR_CODE, s.SPONSOR_NAME, COUNT(DISTINCT a.AWARD_NUMBER) AS award_count FROM SPONSOR s JOIN AWARD a ON a.SPONSOR_CODE = s.SPONSOR_CODE WHERE a.IS_LATEST = 'Y' GROUP BY s.SPONSOR_CODE, s.SPONSOR_NAME ORDER BY award_count DESC",
+    "explanation": "Use AWARD.SPONSOR_CODE to the SPONSOR master, not a feed table."
+  },
+  {
+    "module": "agreement",
+    "question": "How many agreements are there?",
+    "sql": "SELECT COUNT(*) AS agreement_count FROM AGREEMENT_HEADER",
+    "explanation": "AGREEMENT_HEADER is the canonical agreement table."
+  },
+  {
+    "module": "agreement",
+    "question": "List the most recent agreement headers.",
+    "sql": "SELECT ah.AGREEMENT_REQUEST_ID, ah.TITLE, ah.AGREEMENT_STATUS_CODE, ah.CREATE_TIMESTAMP FROM AGREEMENT_HEADER ah ORDER BY ah.CREATE_TIMESTAMP DESC LIMIT 20",
+    "explanation": "Agreement headers live in AGREEMENT_HEADER."
+  },
+  {
+    "module": "agreement",
+    "question": "Find agreements with a supplied status code.",
+    "sql": "SELECT ah.AGREEMENT_REQUEST_ID, ah.TITLE, ah.AGREEMENT_STATUS_CODE, ast.DESCRIPTION FROM AGREEMENT_HEADER ah JOIN AGREEMENT_STATUS ast ON ast.AGREEMENT_STATUS_CODE = ah.AGREEMENT_STATUS_CODE WHERE ah.AGREEMENT_STATUS_CODE = '1' ORDER BY ah.TITLE",
+    "explanation": "Join AGREEMENT_HEADER to AGREEMENT_STATUS."
+  },
+  {
+    "module": "agreement",
+    "question": "List agreements whose start dates fall within a range, with their people and sponsors.",
+    "sql": "SELECT ah.AGREEMENT_REQUEST_ID, ah.TITLE, ah.START_DATE, GROUP_CONCAT(DISTINCT ap.FULL_NAME ORDER BY ap.FULL_NAME SEPARATOR ', ') AS people, GROUP_CONCAT(DISTINCT s.SPONSOR_NAME ORDER BY s.SPONSOR_NAME SEPARATOR ', ') AS sponsors FROM AGREEMENT_HEADER ah LEFT JOIN AGREEMENT_PEOPLE ap ON ap.AGREEMENT_REQUEST_ID = ah.AGREEMENT_REQUEST_ID LEFT JOIN AGREEMENT_SPONSOR ags ON ags.AGREEMENT_REQUEST_ID = ah.AGREEMENT_REQUEST_ID LEFT JOIN SPONSOR s ON s.SPONSOR_CODE = ags.SPONSOR_CODE WHERE ah.START_DATE BETWEEN '2024-01-01' AND '2024-12-31' GROUP BY ah.AGREEMENT_REQUEST_ID, ah.TITLE, ah.START_DATE ORDER BY ah.START_DATE",
+    "explanation": "People via AGREEMENT_PEOPLE; sponsors via AGREEMENT_SPONSOR to SPONSOR."
+  },
+  {
+    "module": "sponsor",
+    "question": "List active sponsors.",
+    "sql": "SELECT s.SPONSOR_CODE, s.SPONSOR_NAME, s.ACRONYM FROM SPONSOR s WHERE s.IS_ACTIVE = 'Y' ORDER BY s.SPONSOR_NAME",
+    "explanation": "SPONSOR is the master; do not query link tables for the sponsor list."
+  },
+  {
+    "module": "proposal",
+    "question": "What is the predicted probability that each proposal-development proposal will be funded?",
+    "sql": null,
+    "explanation": "No proposal-funding prediction field exists in the mapped schema."
+  },
+  {
+    "module": "person",
+    "question": "What is each investigator's Scopus h-index?",
+    "sql": null,
+    "explanation": "Person records have identity and role data, not Scopus metrics."
+  },
+  {
+    "module": "sponsor",
+    "question": "What is the current NIH payline for the next application cycle?",
+    "sql": null,
+    "explanation": "No NIH payline table exists in the mapped modules."
+  },
+  {
+    "module": "proposal",
+    "question": "Find proposal-development proposals associated with Will Smith.",
+    "sql": "SELECT DISTINCT p.PROPOSAL_ID, p.TITLE, p.IP_NUMBER FROM EPS_PROPOSAL p JOIN EPS_PROPOSAL_PERSONS pp ON pp.PROPOSAL_ID = p.PROPOSAL_ID WHERE LOWER(pp.FULL_NAME) LIKE '%will smith%' ORDER BY p.TITLE",
+    "explanation": "Development proposals use EPS_PROPOSAL_PERSONS.FULL_NAME, not ERA_PROPOSAL_PERSON_ROLES."
+  },
+  {
+    "module": "proposal",
+    "question": "Find institutional proposals associated with Will Smith.",
+    "sql": "SELECT DISTINCT p.PROPOSAL_ID, p.PROPOSAL_NUMBER, p.TITLE FROM PROPOSAL p JOIN PROPOSAL_PERSONS pp ON pp.PROPOSAL_ID = p.PROPOSAL_ID WHERE LOWER(pp.FULL_NAME) LIKE '%will smith%' ORDER BY p.PROPOSAL_NUMBER",
+    "explanation": "Institutional proposals use PROPOSAL_PERSONS.FULL_NAME."
+  },
+  {
+    "module": "proposal",
+    "question": "Show proposal-development proposals where Will Smith is the PI.",
+    "sql": "SELECT DISTINCT p.PROPOSAL_ID, p.TITLE, pp.FULL_NAME FROM EPS_PROPOSAL p JOIN EPS_PROPOSAL_PERSONS pp ON pp.PROPOSAL_ID = p.PROPOSAL_ID WHERE pp.PI_FLAG = 'Y' AND LOWER(pp.FULL_NAME) LIKE '%will smith%' ORDER BY p.TITLE",
+    "explanation": "Filter EPS_PROPOSAL_PERSONS by PI_FLAG and FULL_NAME."
+  },
+  {
+    "module": "proposal",
+    "question": "Find proposal-development proposals where Will Smith is a co-investigator.",
+    "sql": "SELECT DISTINCT p.PROPOSAL_ID, p.TITLE, pp.FULL_NAME, r.DESCRIPTION AS person_role FROM EPS_PROPOSAL p JOIN EPS_PROPOSAL_PERSONS pp ON pp.PROPOSAL_ID = p.PROPOSAL_ID JOIN EPS_PROP_PERSON_ROLE r ON r.PROP_PERSON_ROLE_ID = pp.PROP_PERSON_ROLE_ID WHERE r.DESCRIPTION LIKE '%Co-Investigator%' AND LOWER(pp.FULL_NAME) LIKE '%will smith%' ORDER BY p.TITLE",
+    "explanation": "Join EPS_PROP_PERSON_ROLE for the role label; do not use the ERA feed."
+  },
+  {
+    "module": "award",
+    "question": "Find awards whose PI is Will Smith.",
+    "sql": "SELECT DISTINCT a.AWARD_ID, a.AWARD_NUMBER, a.TITLE, ap.FULL_NAME FROM AWARD a JOIN AWARD_PERSONS ap ON ap.AWARD_ID = a.AWARD_ID WHERE ap.PI_FLAG = 'Y' AND LOWER(ap.FULL_NAME) LIKE '%will smith%' ORDER BY a.AWARD_NUMBER",
+    "explanation": "Award PIs are AWARD_PERSONS with PI_FLAG = 'Y'."
+  },
+  {
+    "module": "award",
+    "question": "Find awards associated with the employee whose email is will.smith@example.edu.",
+    "sql": "SELECT DISTINCT a.AWARD_ID, a.AWARD_NUMBER, a.TITLE, ap.FULL_NAME, person.EMAIL_ADDRESS FROM AWARD a JOIN AWARD_PERSONS ap ON ap.AWARD_ID = a.AWARD_ID JOIN PERSON person ON person.PERSON_ID = ap.PERSON_ID WHERE LOWER(person.EMAIL_ADDRESS) = LOWER('will.smith@example.edu') ORDER BY a.AWARD_NUMBER",
+    "explanation": "Email lives on PERSON, joined via AWARD_PERSONS.PERSON_ID."
+  },
+  {
+    "module": "award",
+    "question": "List awards associated with person ID 12345.",
+    "sql": "SELECT DISTINCT a.AWARD_ID, a.AWARD_NUMBER, a.TITLE, ap.PERSON_ID, ap.FULL_NAME FROM AWARD a JOIN AWARD_PERSONS ap ON ap.AWARD_ID = a.AWARD_ID WHERE ap.PERSON_ID = '12345' ORDER BY a.AWARD_NUMBER",
+    "explanation": "Filter AWARD_PERSONS.PERSON_ID."
+  },
+  {
+    "module": "agreement",
+    "question": "Find agreements that list Will Smith as a person.",
+    "sql": "SELECT DISTINCT ah.AGREEMENT_REQUEST_ID, ah.TITLE, ap.FULL_NAME FROM AGREEMENT_HEADER ah JOIN AGREEMENT_PEOPLE ap ON ap.AGREEMENT_REQUEST_ID = ah.AGREEMENT_REQUEST_ID WHERE LOWER(ap.FULL_NAME) LIKE '%will smith%' ORDER BY ah.TITLE",
+    "explanation": "Agreement people live in AGREEMENT_PEOPLE."
+  },
+  {
+    "module": "agreement",
+    "question": "Find agreements listing an employee with email will.smith@example.edu.",
+    "sql": "SELECT DISTINCT ah.AGREEMENT_REQUEST_ID, ah.TITLE, ap.FULL_NAME, person.EMAIL_ADDRESS FROM AGREEMENT_HEADER ah JOIN AGREEMENT_PEOPLE ap ON ap.AGREEMENT_REQUEST_ID = ah.AGREEMENT_REQUEST_ID JOIN PERSON person ON person.PERSON_ID = ap.PERSON_ID WHERE LOWER(person.EMAIL_ADDRESS) = LOWER('will.smith@example.edu') ORDER BY ah.TITLE",
+    "explanation": "Join AGREEMENT_PEOPLE to PERSON for email."
+  },
+  {
+    "module": "proposal",
+    "question": "List institutional proposals associated with person ID 12345.",
+    "sql": "SELECT DISTINCT p.PROPOSAL_ID, p.PROPOSAL_NUMBER, p.TITLE, pp.PERSON_ID, pp.FULL_NAME FROM PROPOSAL p JOIN PROPOSAL_PERSONS pp ON pp.PROPOSAL_ID = p.PROPOSAL_ID WHERE pp.PERSON_ID = '12345' ORDER BY p.PROPOSAL_NUMBER",
+    "explanation": "Institutional people filter is PROPOSAL_PERSONS.PERSON_ID."
+  }
+]

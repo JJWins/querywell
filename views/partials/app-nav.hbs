@@ -1,0 +1,59 @@
+<div class="sub-nav-bar">
+  <div class="wrap sub-nav-inner">
+    <div class="sub-nav-tabs">
+      <a href="/ask" class="tab-item {{#if (eq activeTab 'ask')}}active{{/if}}">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="4 17 10 11 4 5"></polyline>
+          <line x1="12" y1="19" x2="20" y2="19"></line>
+        </svg>
+        <span>SQL Studio</span>
+      </a>
+      <a href="/connect" class="tab-item {{#if (eq activeTab 'connect')}}active{{/if}}">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect>
+          <rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect>
+          <line x1="6" y1="6" x2="6.01" y2="6"></line>
+          <line x1="6" y1="18" x2="6.01" y2="18"></line>
+        </svg>
+        <span>Database Source</span>
+        {{#if connection}}
+          <span class="tab-badge-dot"></span>
+        {{/if}}
+      </a>
+      <a href="/keys" class="tab-item {{#if (eq activeTab 'keys')}}active{{/if}}">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"></path>
+        </svg>
+        <span>API Keys</span>
+      </a>
+    </div>
+
+    <div class="sub-nav-telemetry">
+      <div class="usage-meter-group">
+        <div class="usage-label-row">
+          <span class="usage-title">Plan Quota:</span>
+          <span id="usage" class="usage-count">
+            {{#if usage}}
+              {{usage.used}} of {{usage.limit}} queries
+            {{else}}
+              Loading quota...
+            {{/if}}
+          </span>
+        </div>
+        {{#if usage}}
+          <div class="usage-bar-track" title="{{usage.used}} of {{usage.limit}} used">
+            <div class="usage-bar-fill" style="width: {{percent usage.used usage.limit}}%"></div>
+          </div>
+        {{/if}}
+      </div>
+
+      <button id="billing-action" class="button button-sm primary" type="button">
+        {{#if (eq account.planCode "trial")}}
+          Upgrade Plan
+        {{else}}
+          Manage Billing
+        {{/if}}
+      </button>
+    </div>
+  </div>
+</div>

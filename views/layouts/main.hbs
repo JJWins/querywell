@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{default title "AskMySQL — Natural Language SQL Engine for MySQL"}}</title>
+  <meta name="description" content="Turn plain English questions into verified, read-only SQL queries on your MySQL database. Zero row retention. Secure schema indexing.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/app.css">
+</head>
+<body class="site-body" data-page="{{default page (default activeTab 'home')}}">
+  {{> navbar}}
+
+  <main id="main-content">
+    {{{body}}}
+  </main>
+
+  {{> footer}}
+
+  <div id="toast-container" class="toast-container" aria-live="polite"></div>
+
+  <script type="module" src="/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,460 @@
+[
+  {
+    "table_name": "EPS_PROPOSAL",
+    "module": "proposal_development",
+    "canonical": true,
+    "description": "One proposal-development record used by the proposal workspace and proposal dashboard. It is separate from institutional proposals stored in PROPOSAL.",
+    "name_columns": ["TITLE"],
+    "joins": [
+      {"to": "EPS_PROPOSAL_PERSONS", "on": "EPS_PROPOSAL.PROPOSAL_ID = EPS_PROPOSAL_PERSONS.PROPOSAL_ID"},
+      {"to": "EPS_PROPOSAL_STATUS", "on": "EPS_PROPOSAL.STATUS_CODE = EPS_PROPOSAL_STATUS.STATUS_CODE"},
+      {"to": "EPS_PROPOSAL_TYPE", "on": "EPS_PROPOSAL.TYPE_CODE = EPS_PROPOSAL_TYPE.TYPE_CODE"},
+      {"to": "SPONSOR", "on": "EPS_PROPOSAL.SPONSOR_CODE = SPONSOR.SPONSOR_CODE"},
+      {"to": "UNIT", "on": "EPS_PROPOSAL.HOME_UNIT_NUMBER = UNIT.UNIT_NUMBER"}
+    ]
+  },
+  {
+    "table_name": "EPS_PROPOSAL_PERSONS",
+    "module": "proposal_development",
+    "canonical": true,
+    "description": "One person or rolodex contact assigned to a proposal-development proposal, including PI, co-investigator, and key-person roles. FULL_NAME is the displayed person name.",
+    "name_columns": ["FULL_NAME"],
+    "joins": [
+      {"to": "EPS_PROPOSAL", "on": "EPS_PROPOSAL_PERSONS.PROPOSAL_ID = EPS_PROPOSAL.PROPOSAL_ID"},
+      {"to": "EPS_PROP_PERSON_ROLE", "on": "EPS_PROPOSAL_PERSONS.PROP_PERSON_ROLE_ID = EPS_PROP_PERSON_ROLE.PROP_PERSON_ROLE_ID"},
+      {"to": "PERSON", "on": "EPS_PROPOSAL_PERSONS.PERSON_ID = PERSON.PERSON_ID"}
+    ]
+  },
+  {
+    "table_name": "EPS_PROP_PERSON_ROLE",
+    "module": "proposal_development",
+    "canonical": true,
+    "description": "Lookup of proposal-development person roles shown with proposal team members.",
+    "name_columns": ["DESCRIPTION"],
+    "joins": [
+      {"to": "EPS_PROPOSAL_PERSONS", "on": "EPS_PROPOSAL_PERSONS.PROP_PERSON_ROLE_ID = EPS_PROP_PERSON_ROLE.PROP_PERSON_ROLE_ID"}
+    ]
+  },
+  {
+    "table_name": "EPS_PROPOSAL_SPONSORS",
+    "module": "proposal_development",
+    "canonical": true,
+    "description": "Sponsor and funding details associated with a proposal-development proposal. Not the SPONSOR master table.",
+    "name_columns": ["SPONSOR_NAME", "FULL_NAME"],
+    "joins": [
+      {"to": "EPS_PROPOSAL", "on": "EPS_PROPOSAL_SPONSORS.PROPOSAL_ID = EPS_PROPOSAL.PROPOSAL_ID"},
+      {"to": "SPONSOR", "on": "EPS_PROPOSAL_SPONSORS.SPONSOR_CODE = SPONSOR.SPONSOR_CODE"}
+    ]
+  },
+  {
+    "table_name": "EPS_PROPOSAL_STATUS",
+    "module": "proposal_development",
+    "canonical": true,
+    "description": "Status-code descriptions used by proposal-development status displays and filters.",
+    "name_columns": ["DESCRIPTION"],
+    "joins": [
+      {"to": "EPS_PROPOSAL", "on": "EPS_PROPOSAL.STATUS_CODE = EPS_PROPOSAL_STATUS.STATUS_CODE"}
+    ]
+  },
+  {
+    "table_name": "EPS_PROPOSAL_TYPE",
+    "module": "proposal_development",
+    "canonical": true,
+    "description": "Proposal-development type descriptions used by proposal forms and filters.",
+    "name_columns": ["DESCRIPTION"],
+    "joins": [
+      {"to": "EPS_PROPOSAL", "on": "EPS_PROPOSAL.TYPE_CODE = EPS_PROPOSAL_TYPE.TYPE_CODE"}
+    ]
+  },
+  {
+    "table_name": "EPS_PROPOSAL_ATTACHMENTS",
+    "module": "proposal_development",
+    "canonical": true,
+    "description": "Attachment metadata for a proposal-development proposal.",
+    "name_columns": ["DESCRIPTION", "FILE_NAME"],
+    "joins": [
+      {"to": "EPS_PROPOSAL", "on": "EPS_PROPOSAL_ATTACHMENTS.PROPOSAL_ID = EPS_PROPOSAL.PROPOSAL_ID"}
+    ]
+  },
+  {
+    "table_name": "EPS_PROPOSAL_KEYWORDS",
+    "module": "proposal_development",
+    "canonical": true,
+    "description": "Keywords attached to a proposal-development proposal.",
+    "name_columns": ["KEYWORD"],
+    "joins": [
+      {"to": "EPS_PROPOSAL", "on": "EPS_PROPOSAL_KEYWORDS.PROPOSAL_ID = EPS_PROPOSAL.PROPOSAL_ID"}
+    ]
+  },
+  {
+    "table_name": "EPS_PROPOSAL_RESRCH_AREAS",
+    "module": "proposal_development",
+    "canonical": true,
+    "description": "Research-area selections for a proposal-development proposal.",
+    "name_columns": [],
+    "joins": [
+      {"to": "EPS_PROPOSAL", "on": "EPS_PROPOSAL_RESRCH_AREAS.PROPOSAL_ID = EPS_PROPOSAL.PROPOSAL_ID"}
+    ]
+  },
+  {
+    "table_name": "EPS_PROP_PERSON_UNITS",
+    "module": "proposal_development",
+    "canonical": true,
+    "description": "Unit assignments for a proposal-development person, including the lead-unit flag.",
+    "name_columns": [],
+    "joins": [
+      {"to": "EPS_PROPOSAL_PERSONS", "on": "EPS_PROP_PERSON_UNITS.PROPOSAL_PERSON_ID = EPS_PROPOSAL_PERSONS.PROPOSAL_PERSON_ID"},
+      {"to": "UNIT", "on": "EPS_PROP_PERSON_UNITS.UNIT_NUMBER = UNIT.UNIT_NUMBER"}
+    ]
+  },
+  {
+    "table_name": "PROPOSAL",
+    "module": "institutional_proposal",
+    "canonical": true,
+    "description": "One institutional proposal record. This is not the EPS proposal-development table.",
+    "name_columns": ["TITLE"],
+    "joins": [
+      {"to": "PROPOSAL_PERSONS", "on": "PROPOSAL.PROPOSAL_ID = PROPOSAL_PERSONS.PROPOSAL_ID"},
+      {"to": "PROPOSAL_STATUS", "on": "PROPOSAL.STATUS_CODE = PROPOSAL_STATUS.STATUS_CODE"},
+      {"to": "PROPOSAL_TYPE", "on": "PROPOSAL.TYPE_CODE = PROPOSAL_TYPE.TYPE_CODE"},
+      {"to": "SPONSOR", "on": "PROPOSAL.SPONSOR_CODE = SPONSOR.SPONSOR_CODE"},
+      {"to": "UNIT", "on": "PROPOSAL.HOME_UNIT_NUMBER = UNIT.UNIT_NUMBER"}
+    ]
+  },
+  {
+    "table_name": "PROPOSAL_PERSONS",
+    "module": "institutional_proposal",
+    "canonical": true,
+    "description": "One person assigned to an institutional proposal. FULL_NAME is the stored display name. Canonical people list for institutional proposals.",
+    "name_columns": ["FULL_NAME"],
+    "joins": [
+      {"to": "PROPOSAL", "on": "PROPOSAL_PERSONS.PROPOSAL_ID = PROPOSAL.PROPOSAL_ID"},
+      {"to": "EPS_PROP_PERSON_ROLE", "on": "PROPOSAL_PERSONS.PROP_PERSON_ROLE_ID = EPS_PROP_PERSON_ROLE.PROP_PERSON_ROLE_ID"},
+      {"to": "PERSON", "on": "PROPOSAL_PERSONS.PERSON_ID = PERSON.PERSON_ID"}
+    ]
+  },
+  {
+    "table_name": "PROPOSAL_STATUS",
+    "module": "institutional_proposal",
+    "canonical": true,
+    "description": "Institutional proposal status descriptions used by proposal details and dashboard filters.",
+    "name_columns": ["DESCRIPTION"],
+    "joins": [
+      {"to": "PROPOSAL", "on": "PROPOSAL.STATUS_CODE = PROPOSAL_STATUS.STATUS_CODE"}
+    ]
+  },
+  {
+    "table_name": "PROPOSAL_TYPE",
+    "module": "institutional_proposal",
+    "canonical": true,
+    "description": "Institutional proposal type descriptions used by the institutional proposal UI.",
+    "name_columns": ["DESCRIPTION"],
+    "joins": [
+      {"to": "PROPOSAL", "on": "PROPOSAL.TYPE_CODE = PROPOSAL_TYPE.TYPE_CODE"}
+    ]
+  },
+  {
+    "table_name": "PROPOSAL_SPONSORS",
+    "module": "institutional_proposal",
+    "canonical": true,
+    "description": "Sponsor rows associated with an institutional proposal. Not the SPONSOR master table.",
+    "name_columns": [],
+    "joins": [
+      {"to": "PROPOSAL", "on": "PROPOSAL_SPONSORS.PROPOSAL_ID = PROPOSAL.PROPOSAL_ID"},
+      {"to": "SPONSOR", "on": "PROPOSAL_SPONSORS.SPONSOR_CODE = SPONSOR.SPONSOR_CODE"}
+    ]
+  },
+  {
+    "table_name": "PROPOSAL_ATTACHMENTS",
+    "module": "institutional_proposal",
+    "canonical": true,
+    "description": "Attachment metadata for institutional proposals.",
+    "name_columns": ["DESCRIPTION", "FILE_NAME"],
+    "joins": [
+      {"to": "PROPOSAL", "on": "PROPOSAL_ATTACHMENTS.PROPOSAL_ID = PROPOSAL.PROPOSAL_ID"}
+    ]
+  },
+  {
+    "table_name": "PROPOSAL_KEYWORDS",
+    "module": "institutional_proposal",
+    "canonical": true,
+    "description": "Keyword rows attached to an institutional proposal.",
+    "name_columns": ["KEYWORD"],
+    "joins": [
+      {"to": "PROPOSAL", "on": "PROPOSAL_KEYWORDS.PROPOSAL_ID = PROPOSAL.PROPOSAL_ID"}
+    ]
+  },
+  {
+    "table_name": "PROPOSAL_RESRCH_AREAS",
+    "module": "institutional_proposal",
+    "canonical": true,
+    "description": "Research-area selections for an institutional proposal.",
+    "name_columns": [],
+    "joins": [
+      {"to": "PROPOSAL", "on": "PROPOSAL_RESRCH_AREAS.PROPOSAL_ID = PROPOSAL.PROPOSAL_ID"}
+    ]
+  },
+  {
+    "table_name": "PROP_PERSON_UNITS",
+    "module": "institutional_proposal",
+    "canonical": true,
+    "description": "Unit assignments for an institutional proposal person, including the lead-unit flag.",
+    "name_columns": [],
+    "joins": [
+      {"to": "PROPOSAL_PERSONS", "on": "PROP_PERSON_UNITS.PROPOSAL_PERSON_ID = PROPOSAL_PERSONS.PROPOSAL_PERSON_ID"},
+      {"to": "UNIT", "on": "PROP_PERSON_UNITS.UNIT_NUMBER = UNIT.UNIT_NUMBER"}
+    ]
+  },
+  {
+    "table_name": "PROPOSAL_ADMIN_DETAILS",
+    "module": "institutional_proposal",
+    "canonical": true,
+    "description": "Links an institutional proposal to its related development proposal.",
+    "name_columns": ["INST_PROP_CREATE_USER", "SIGNED_BY"],
+    "joins": [
+      {"to": "PROPOSAL", "on": "PROPOSAL_ADMIN_DETAILS.INST_PROPOSAL_ID = PROPOSAL.PROPOSAL_ID"},
+      {"to": "EPS_PROPOSAL", "on": "PROPOSAL_ADMIN_DETAILS.DEV_PROPOSAL_ID = EPS_PROPOSAL.PROPOSAL_ID"}
+    ]
+  },
+  {
+    "table_name": "AWARD",
+    "module": "award",
+    "canonical": true,
+    "description": "One award record or award version used by the award workspace and dashboard.",
+    "name_columns": ["TITLE"],
+    "joins": [
+      {"to": "AWARD_PERSONS", "on": "AWARD.AWARD_ID = AWARD_PERSONS.AWARD_ID"},
+      {"to": "AWARD_STATUS", "on": "AWARD.STATUS_CODE = AWARD_STATUS.STATUS_CODE"},
+      {"to": "AWARD_TYPE", "on": "AWARD.AWARD_TYPE_CODE = AWARD_TYPE.AWARD_TYPE_CODE"},
+      {"to": "SPONSOR", "on": "AWARD.SPONSOR_CODE = SPONSOR.SPONSOR_CODE"},
+      {"to": "UNIT", "on": "AWARD.LEAD_UNIT_NUMBER = UNIT.UNIT_NUMBER"}
+    ]
+  },
+  {
+    "table_name": "AWARD_PERSONS",
+    "module": "award",
+    "canonical": true,
+    "description": "One PI or other person assigned to an award. Canonical live people list for awards.",
+    "name_columns": ["FULL_NAME"],
+    "joins": [
+      {"to": "AWARD", "on": "AWARD_PERSONS.AWARD_ID = AWARD.AWARD_ID"},
+      {"to": "EPS_PROP_PERSON_ROLE", "on": "AWARD_PERSONS.PERSON_ROLE_ID = EPS_PROP_PERSON_ROLE.PROP_PERSON_ROLE_ID"},
+      {"to": "PERSON", "on": "AWARD_PERSONS.PERSON_ID = PERSON.PERSON_ID"}
+    ]
+  },
+  {
+    "table_name": "AWARD_STATUS",
+    "module": "award",
+    "canonical": true,
+    "description": "Award status-code descriptions used in award details and status displays.",
+    "name_columns": ["DESCRIPTION"],
+    "joins": [
+      {"to": "AWARD", "on": "AWARD.STATUS_CODE = AWARD_STATUS.STATUS_CODE"}
+    ]
+  },
+  {
+    "table_name": "AWARD_TYPE",
+    "module": "award",
+    "canonical": true,
+    "description": "Award type descriptions used by the award setup and detail UI.",
+    "name_columns": ["DESCRIPTION"],
+    "joins": [
+      {"to": "AWARD", "on": "AWARD.AWARD_TYPE_CODE = AWARD_TYPE.AWARD_TYPE_CODE"}
+    ]
+  },
+  {
+    "table_name": "AWARD_FUNDING_PROPOSALS",
+    "module": "award",
+    "canonical": true,
+    "description": "Association between an award and an institutional proposal.",
+    "name_columns": [],
+    "joins": [
+      {"to": "AWARD", "on": "AWARD_FUNDING_PROPOSALS.AWARD_ID = AWARD.AWARD_ID"},
+      {"to": "PROPOSAL", "on": "AWARD_FUNDING_PROPOSALS.PROPOSAL_ID = PROPOSAL.PROPOSAL_ID"}
+    ]
+  },
+  {
+    "table_name": "AWARD_PERSON_UNIT",
+    "module": "award",
+    "canonical": true,
+    "description": "Unit assignments for an award person, including the lead-unit flag.",
+    "name_columns": [],
+    "joins": [
+      {"to": "AWARD_PERSONS", "on": "AWARD_PERSON_UNIT.AWARD_PERSON_ID = AWARD_PERSONS.AWARD_PERSON_ID"},
+      {"to": "UNIT", "on": "AWARD_PERSON_UNIT.UNIT_NUMBER = UNIT.UNIT_NUMBER"}
+    ]
+  },
+  {
+    "table_name": "AWARD_PROJECT_TEAM",
+    "module": "award",
+    "canonical": true,
+    "description": "Project-team assignments on an award, separate from AWARD_PERSONS.",
+    "name_columns": ["FULL_NAME", "PROJECT_ROLE"],
+    "joins": [
+      {"to": "AWARD", "on": "AWARD_PROJECT_TEAM.AWARD_ID = AWARD.AWARD_ID"},
+      {"to": "PERSON", "on": "AWARD_PROJECT_TEAM.PERSON_ID = PERSON.PERSON_ID"}
+    ]
+  },
+  {
+    "table_name": "AGREEMENT_HEADER",
+    "module": "agreement",
+    "canonical": true,
+    "description": "One agreement request/header used by the agreement workspace.",
+    "name_columns": ["TITLE", "REQUESTOR_NAME", "ADMIN_PERSON_NAME"],
+    "joins": [
+      {"to": "AGREEMENT_PEOPLE", "on": "AGREEMENT_HEADER.AGREEMENT_REQUEST_ID = AGREEMENT_PEOPLE.AGREEMENT_REQUEST_ID"},
+      {"to": "AGREEMENT_SPONSOR", "on": "AGREEMENT_HEADER.AGREEMENT_REQUEST_ID = AGREEMENT_SPONSOR.AGREEMENT_REQUEST_ID"},
+      {"to": "AGREEMENT_STATUS", "on": "AGREEMENT_HEADER.AGREEMENT_STATUS_CODE = AGREEMENT_STATUS.AGREEMENT_STATUS_CODE"},
+      {"to": "AGREEMENT_TYPE", "on": "AGREEMENT_HEADER.AGREEMENT_TYPE_CODE = AGREEMENT_TYPE.AGREEMENT_TYPE_CODE"},
+      {"to": "AGREEMENT_CATEGORY", "on": "AGREEMENT_HEADER.CATEGORY_CODE = AGREEMENT_CATEGORY.CATEGORY_CODE"},
+      {"to": "UNIT", "on": "AGREEMENT_HEADER.UNIT_NUMBER = UNIT.UNIT_NUMBER"}
+    ]
+  },
+  {
+    "table_name": "AGREEMENT_PEOPLE",
+    "module": "agreement",
+    "canonical": true,
+    "description": "One person associated with an agreement. Canonical people list for agreements.",
+    "name_columns": ["FULL_NAME"],
+    "joins": [
+      {"to": "AGREEMENT_HEADER", "on": "AGREEMENT_PEOPLE.AGREEMENT_REQUEST_ID = AGREEMENT_HEADER.AGREEMENT_REQUEST_ID"},
+      {"to": "AGREEMENT_PEOPLE_TYPE", "on": "AGREEMENT_PEOPLE.PEOPLE_TYPE_ID = AGREEMENT_PEOPLE_TYPE.PEOPLE_TYPE_ID"},
+      {"to": "PERSON", "on": "AGREEMENT_PEOPLE.PERSON_ID = PERSON.PERSON_ID"}
+    ]
+  },
+  {
+    "table_name": "AGREEMENT_SPONSOR",
+    "module": "agreement",
+    "canonical": true,
+    "description": "Sponsor records associated with an agreement. Not the SPONSOR master table.",
+    "name_columns": ["SPONSOR_NAME"],
+    "joins": [
+      {"to": "AGREEMENT_HEADER", "on": "AGREEMENT_SPONSOR.AGREEMENT_REQUEST_ID = AGREEMENT_HEADER.AGREEMENT_REQUEST_ID"},
+      {"to": "SPONSOR", "on": "AGREEMENT_SPONSOR.SPONSOR_CODE = SPONSOR.SPONSOR_CODE"}
+    ]
+  },
+  {
+    "table_name": "AGREEMENT_STATUS",
+    "module": "agreement",
+    "canonical": true,
+    "description": "Agreement status codes and descriptions used by agreement headers and filters.",
+    "name_columns": ["DESCRIPTION"],
+    "joins": [
+      {"to": "AGREEMENT_HEADER", "on": "AGREEMENT_HEADER.AGREEMENT_STATUS_CODE = AGREEMENT_STATUS.AGREEMENT_STATUS_CODE"}
+    ]
+  },
+  {
+    "table_name": "AGREEMENT_TYPE",
+    "module": "agreement",
+    "canonical": true,
+    "description": "Agreement type descriptions used in agreement creation and detail screens.",
+    "name_columns": ["DESCRIPTION"],
+    "joins": [
+      {"to": "AGREEMENT_HEADER", "on": "AGREEMENT_HEADER.AGREEMENT_TYPE_CODE = AGREEMENT_TYPE.AGREEMENT_TYPE_CODE"},
+      {"to": "AGREEMENT_CATEGORY", "on": "AGREEMENT_TYPE.CATEGORY_CODE = AGREEMENT_CATEGORY.CATEGORY_CODE"}
+    ]
+  },
+  {
+    "table_name": "AGREEMENT_CATEGORY",
+    "module": "agreement",
+    "canonical": true,
+    "description": "Agreement category descriptions used to group agreement types.",
+    "name_columns": ["DESCRIPTION"],
+    "joins": [
+      {"to": "AGREEMENT_TYPE", "on": "AGREEMENT_TYPE.CATEGORY_CODE = AGREEMENT_CATEGORY.CATEGORY_CODE"},
+      {"to": "AGREEMENT_HEADER", "on": "AGREEMENT_HEADER.CATEGORY_CODE = AGREEMENT_CATEGORY.CATEGORY_CODE"}
+    ]
+  },
+  {
+    "table_name": "AGREEMENT_ATTACHMENT",
+    "module": "agreement",
+    "canonical": true,
+    "description": "Attachment metadata for an agreement.",
+    "name_columns": ["DESCRIPTION", "FILE_NAME"],
+    "joins": [
+      {"to": "AGREEMENT_HEADER", "on": "AGREEMENT_ATTACHMENT.AGREEMENT_REQUEST_ID = AGREEMENT_HEADER.AGREEMENT_REQUEST_ID"}
+    ]
+  },
+  {
+    "table_name": "AGREEMENT_KEYWORDS",
+    "module": "agreement",
+    "canonical": true,
+    "description": "Keyword associations attached to an agreement.",
+    "name_columns": [],
+    "joins": [
+      {"to": "AGREEMENT_HEADER", "on": "AGREEMENT_KEYWORDS.AGREEMENT_REQUEST_ID = AGREEMENT_HEADER.AGREEMENT_REQUEST_ID"}
+    ]
+  },
+  {
+    "table_name": "AGREEMENT_PEOPLE_TYPE",
+    "module": "agreement",
+    "canonical": true,
+    "description": "Lookup of agreement people types used in the agreement workspace.",
+    "name_columns": ["DESCRIPTION"],
+    "joins": [
+      {"to": "AGREEMENT_PEOPLE", "on": "AGREEMENT_PEOPLE.PEOPLE_TYPE_ID = AGREEMENT_PEOPLE_TYPE.PEOPLE_TYPE_ID"}
+    ]
+  },
+  {
+    "table_name": "PERSON",
+    "module": "core",
+    "canonical": true,
+    "description": "Institutional employee directory used to enrich proposal, award, and agreement people with email and profile details.",
+    "name_columns": ["FULL_NAME", "FIRST_NAME", "LAST_NAME", "USER_NAME", "EMAIL_ADDRESS"],
+    "joins": [
+      {"to": "EPS_PROPOSAL_PERSONS", "on": "EPS_PROPOSAL_PERSONS.PERSON_ID = PERSON.PERSON_ID"},
+      {"to": "PROPOSAL_PERSONS", "on": "PROPOSAL_PERSONS.PERSON_ID = PERSON.PERSON_ID"},
+      {"to": "AWARD_PERSONS", "on": "AWARD_PERSONS.PERSON_ID = PERSON.PERSON_ID"},
+      {"to": "AGREEMENT_PEOPLE", "on": "AGREEMENT_PEOPLE.PERSON_ID = PERSON.PERSON_ID"},
+      {"to": "UNIT", "on": "PERSON.HOME_UNIT = UNIT.UNIT_NUMBER"}
+    ]
+  },
+  {
+    "table_name": "SPONSOR",
+    "module": "core",
+    "canonical": true,
+    "description": "Sponsor master record used to resolve sponsor codes and names. Link tables are not the master.",
+    "name_columns": ["SPONSOR_NAME", "ACRONYM"],
+    "joins": [
+      {"to": "PROPOSAL", "on": "PROPOSAL.SPONSOR_CODE = SPONSOR.SPONSOR_CODE"},
+      {"to": "EPS_PROPOSAL", "on": "EPS_PROPOSAL.SPONSOR_CODE = SPONSOR.SPONSOR_CODE"},
+      {"to": "AWARD", "on": "AWARD.SPONSOR_CODE = SPONSOR.SPONSOR_CODE"},
+      {"to": "AGREEMENT_SPONSOR", "on": "AGREEMENT_SPONSOR.SPONSOR_CODE = SPONSOR.SPONSOR_CODE"},
+      {"to": "SPONSOR_TYPE", "on": "SPONSOR.SPONSOR_TYPE_CODE = SPONSOR_TYPE.SPONSOR_TYPE_CODE"}
+    ]
+  },
+  {
+    "table_name": "SPONSOR_TYPE",
+    "module": "core",
+    "canonical": true,
+    "description": "Lookup of sponsor categories used to classify sponsor master records.",
+    "name_columns": ["DESCRIPTION"],
+    "joins": [
+      {"to": "SPONSOR", "on": "SPONSOR.SPONSOR_TYPE_CODE = SPONSOR_TYPE.SPONSOR_TYPE_CODE"}
+    ]
+  },
+  {
+    "table_name": "UNIT",
+    "module": "core",
+    "canonical": true,
+    "description": "Organizational unit hierarchy used for proposal home units, award lead units, agreement units, and person affiliations.",
+    "name_columns": ["UNIT_NAME", "DISPLAY_NAME", "ACRONYM"],
+    "joins": [
+      {"to": "EPS_PROPOSAL", "on": "EPS_PROPOSAL.HOME_UNIT_NUMBER = UNIT.UNIT_NUMBER"},
+      {"to": "PROPOSAL", "on": "PROPOSAL.HOME_UNIT_NUMBER = UNIT.UNIT_NUMBER"},
+      {"to": "AWARD", "on": "AWARD.LEAD_UNIT_NUMBER = UNIT.UNIT_NUMBER"},
+      {"to": "AGREEMENT_HEADER", "on": "AGREEMENT_HEADER.UNIT_NUMBER = UNIT.UNIT_NUMBER"},
+      {"to": "PERSON", "on": "PERSON.HOME_UNIT = UNIT.UNIT_NUMBER"}
+    ]
+  },
+  {
+    "table_name": "ERA_PROPOSAL_PERSON_ROLES",
+    "module": "era",
+    "canonical": false,
+    "description": "ERA proposal-person role feed. Not the canonical people list. Use EPS_PROPOSAL_PERSONS or PROPOSAL_PERSONS instead.",
+    "name_columns": ["FULL_NAME", "ROLE_NAME"],
+    "joins": [
+      {"to": "EPS_PROPOSAL", "on": "ERA_PROPOSAL_PERSON_ROLES.PROPOSAL_ID = EPS_PROPOSAL.PROPOSAL_ID"}
+    ]
+  }
+]

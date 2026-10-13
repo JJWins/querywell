@@ -1,0 +1,378 @@
+<div class="studio-container">
+  <div class="page-title-row">
+    <div>
+      <h1 class="page-title">Database Source &amp; Schema Inspector</h1>
+      <p class="page-desc">
+        Connect a read-only MySQL replica. We inspect table schemas, column types, and categorical lookups. Your customer table rows remain strictly on your server.
+      </p>
+    </div>
+    <div class="page-actions">
+      <span id="who" hidden></span>
+      <a id="ask-link" href="/ask" class="button primary">
+        <span>Open SQL Studio</span>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="9 18 15 12 9 6"></polyline>
+        </svg>
+      </a>
+    </div>
+  </div>
+
+  <div id="error" class="form-error" hidden></div>
+
+  <!-- Active Connection Banner -->
+  <div id="current" class="panel conn-overview-panel {{#unless connection}}hidden{{/unless}}" {{#unless connection}}hidden{{/unless}}>
+    {{#if connection}}
+      <div class="conn-status-header">
+        <div class="conn-status-title">
+          <span class="status-indicator-dot online"></span>
+          <span>Active MySQL Source</span>
+        </div>
+        <div class="conn-header-badges">
+          <span class="badge badge-emerald">Read-Only Verified</span>
+          {{#if (eq connection.path "small")}}
+            <span class="badge badge-indigo">Direct Full-Schema</span>
+          {{else if (eq connection.path "medium")}}
+            <span class="badge badge-indigo">Vector Retrieval</span>
+          {{else if (eq connection.path "large")}}
+            <span class="badge badge-indigo">Multi-Module Index</span>
+          {{/if}}
+        </div>
+      </div>
+
+      <div class="conn-details-grid">
+        <div class="conn-metric">
+          <span class="metric-label">Database</span>
+          <span class="metric-val"><code>{{default connection.database connection.databaseName}}</code></span>
+        </div>
+        <div class="conn-metric">
+          <span class="metric-label">Host &amp; Port</span>
+          <span class="metric-val"><code>{{connection.host}}:{{connection.port}}</code></span>
+        </div>
+        <div class="conn-metric">
+          <span class="metric-label">Username</span>
+          <span class="metric-val"><code>{{connection.username}}</code></span>
+        </div>
+        <div class="conn-metric">
+          <span class="metric-label">Security</span>
+          <span class="metric-val">AES-256-GCM Vault</span>
+        </div>
+      </div>
+
+      {{#if connection.plan}}
+        <div class="conn-schema-grid">
+          <div class="conn-metric">
+            <span class="metric-label">Schema Volume</span>
+            <span class="metric-val"><strong>{{formatNumber connection.schemaTextChars}}</strong> characters</span>
+          </div>
+          <div class="conn-metric">
+            <span class="metric-label">AI Engine Routing</span>
+            <span class="metric-val">
+              {{#if (eq connection.path "small")}}
+                Direct Full-Schema (Small)
+              {{else if (eq connection.path "medium")}}
+                Vector Retrieval (Medium)
+              {{else}}
+                Multi-Module Index (Large)
+              {{/if}}
+            </span>
+          </div>
+          <div class="conn-metric">
+            <span class="metric-label">Required Tier</span>
+            <span class="metric-val">
+              {{#if (eq connection.plan.code "starter")}}Starter ($39/mo) or above
+              {{else if (eq connection.plan.code "growth")}}Growth ($99/mo) or above
+              {{else}}Scale ($299/mo)
+              {{/if}}
+            </span>
+          </div>
+          <div class="conn-metric">
+            <span class="metric-label">Workspace Coverage</span>
+            <span class="metric-val">
+              {{#if (eq account.planCode "scale")}}
+                <span class="badge badge-emerald">Covered by Scale Plan</span>
+              {{else if (eq account.planCode "growth")}}
+                <span class="badge badge-emerald">Covered by Growth Plan</span>
+              {{else if (eq account.planCode "starter")}}
+                <span class="badge badge-emerald">Covered by Starter Plan</span>
+              {{else}}
+                <span class="badge badge-subtle">Free Trial</span>
+              {{/if}}
+            </span>
+          </div>
+        </div>
+      {{/if}}
+
+      <div class="conn-switch-note">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="16" x2="12" y2="12"></line>
+          <line x1="12" y1="8" x2="12.01" y2="8"></line>
+        </svg>
+        <span><strong>Changing databases:</strong> You can update credentials below anytime to connect a new database. Re-indexing updates the schema catalog without affecting your plan or monthly query credits.</span>
+      </div>
+    {{else}}
+      <p>Saved connection: None configured yet.</p>
+    {{/if}}
+  </div>
+
+  <div class="two-col-layout">
+    <!-- Left Column: Form -->
+    <div class="col-main">
+      <div class="panel form-panel">
+        <div class="panel-header">
+          <h3 class="panel-title">{{#if connection}}Change / Update Connection{{else}}Connection Credentials{{/if}}</h3>
+          <span class="badge badge-subtle">{{#if connection}}Active Source Configured{{else}}Direct TCP Connection{{/if}}</span>
+        </div>
+
+        <form id="connect-form" class="connect-form" novalidate>
+          <div class="form-row-2">
+            <div class="form-group flex-3">
+              <label for="host" class="form-label">Host / IP Address</label>
+              <input 
+                id="host" 
+                name="host" 
+                type="text" 
+                class="form-input" 
+                value="{{default connection.host '127.0.0.1'}}" 
+                placeholder="127.0.0.1 or rds.amazonaws.com" 
+                required
+              >
+            </div>
+            <div class="form-group flex-1">
+              <label for="port" class="form-label">Port</label>
+              <input 
+                id="port" 
+                name="port" 
+                type="number" 
+                class="form-input" 
+                value="{{default connection.port '3306'}}" 
+                placeholder="3306" 
+                required
+              >
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="database" class="form-label">Database Name</label>
+            <input 
+              id="database" 
+              name="database" 
+              type="text" 
+              class="form-input" 
+              value="{{default connection.database (default connection.databaseName '')}}" 
+              placeholder="e.g. production_db" 
+              required
+            >
+          </div>
+
+          <div class="form-group">
+            <label for="username" class="form-label">Username (Read-Only User)</label>
+            <input 
+              id="username" 
+              name="username" 
+              type="text" 
+              class="form-input" 
+              value="{{default connection.username ''}}" 
+              placeholder="e.g. nlq_ro" 
+              required
+            >
+          </div>
+
+          <div class="form-group">
+            <label for="db-password" class="form-label">
+              <span>Password</span>
+              <span class="label-desc">Encrypted with AES-256-GCM before storage</span>
+            </label>
+            <input 
+              id="db-password" 
+              name="password" 
+              type="password" 
+              class="form-input" 
+              placeholder="••••••••••••" 
+              required
+            >
+          </div>
+
+          <div class="form-submit-row">
+            <button id="connect-submit-btn" type="submit" class="button button-lg primary">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
+              </svg>
+              <span id="submit-btn-text">{{#if connection}}Update &amp; Re-Index Schema{{else}}Connect &amp; Auto-Index Schema{{/if}}</span>
+            </button>
+            <span class="submit-note">Each table is embedded once. Switching databases preserves your plan and question quota.</span>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Right Column: Setup Helper -->
+    <div class="col-side">
+      <div class="panel setup-helper-panel">
+        <div class="panel-header">
+          <div class="panel-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+            </svg>
+          </div>
+          <h3 class="panel-title">Read-Only User Guide</h3>
+          <span class="badge badge-emerald">Zero Row Retention</span>
+        </div>
+        <p class="panel-text">
+          To ensure strict isolation, provision a dedicated MySQL user with <code>SELECT</code> grants only. Write privileges are actively checked and rejected.
+        </p>
+
+        <div class="code-box">
+          <div class="code-box-header">
+            <span>MySQL Syntax</span>
+            <button id="copy-syntax-btn" type="button" class="button button-sm ghost">Copy Syntax</button>
+          </div>
+          <pre><code id="syntax-code"><span class="kw">CREATE USER</span> <span class="str">'nlq_ro'</span>@<span class="str">'%'</span> <span class="kw">IDENTIFIED BY</span> <span class="str">'password'</span>;
+<span class="kw">GRANT SELECT ON</span> production_db.* <span class="kw">TO</span> <span class="str">'nlq_ro'</span>@<span class="str">'%'</span>;
+<span class="kw">FLUSH PRIVILEGES</span>;</code></pre>
+        </div>
+
+        <div class="helper-security-alert">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="8" x2="12" y2="12"></line>
+            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+          </svg>
+          <span>If the user has <code>DROP</code>, <code>INSERT</code>, or <code>ALTER</code> rights, connection setup fails automatically.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Dedicated Live Schema Indexing Modal -->
+  <div id="index-modal" class="modal-backdrop" hidden>
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+      <div class="modal-header">
+        <div class="modal-header-left">
+          <div class="modal-icon-badge">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <ellipse cx="12" cy="5" rx="9" ry="3"></ellipse>
+              <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"></path>
+              <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path>
+            </svg>
+          </div>
+          <div class="modal-title-group">
+            <h3 id="modal-title" class="modal-title">Indexing Database Schema</h3>
+            <span id="modal-target-db" class="modal-target">127.0.0.1:3306</span>
+          </div>
+        </div>
+        <span id="process-state" class="badge badge-indigo">Running</span>
+      </div>
+
+      <div class="modal-body">
+        <!-- Live Progress Bar -->
+        <div class="progress-bar-container">
+          <div class="progress-bar-meta">
+            <span id="progress-phase" class="progress-phase-text">Verifying read-only access...</span>
+            <span id="progress-percent" class="progress-percent-text">0%</span>
+          </div>
+          <div class="progress-track">
+            <div id="progress-fill" class="progress-fill"></div>
+          </div>
+        </div>
+
+        <!-- 7-Stage Structured Checklist -->
+        <ol id="progress" class="process-list">
+          <li class="process-step" data-step="access" data-state="waiting">
+            <span class="process-mark">1</span>
+            <div class="process-copy">
+              <p class="process-title">Check read-only access</p>
+              <p class="process-detail">Confirm this user cannot write.</p>
+            </div>
+            <span class="process-status">Waiting</span>
+          </li>
+          <li class="process-step" data-step="schema" data-state="waiting">
+            <span class="process-mark">2</span>
+            <div class="process-copy">
+              <p class="process-title">Read schema</p>
+              <p class="process-detail">Read tables and columns from MySQL.</p>
+            </div>
+            <span class="process-status">Waiting</span>
+          </li>
+          <li class="process-step" data-step="catalog" data-state="waiting">
+            <span class="process-mark">3</span>
+            <div class="process-copy">
+              <p class="process-title">Store catalog</p>
+              <p class="process-detail">Save the schema for this workspace.</p>
+            </div>
+            <span class="process-status">Waiting</span>
+          </li>
+          <li class="process-step" data-step="embed" data-state="waiting">
+            <span class="process-mark">4</span>
+            <div class="process-copy">
+              <p class="process-title">Embed tables</p>
+              <p class="process-detail">Create a vector for each table.</p>
+            </div>
+            <span class="process-status">Waiting</span>
+          </li>
+          <li class="process-step" data-step="vectors" data-state="waiting">
+            <span class="process-mark">5</span>
+            <div class="process-copy">
+              <p class="process-title">Index vectors</p>
+              <p class="process-detail">Write the table vectors to the index.</p>
+            </div>
+            <span class="process-status">Waiting</span>
+          </li>
+          <li class="process-step" data-step="lookups" data-state="waiting">
+            <span class="process-mark">6</span>
+            <div class="process-copy">
+              <p class="process-title">Index lookup values</p>
+              <p class="process-detail">Collect short categorical values.</p>
+            </div>
+            <span class="process-status">Waiting</span>
+          </li>
+          <li class="process-step" data-step="measure" data-state="waiting">
+            <span class="process-mark">7</span>
+            <div class="process-copy">
+              <p class="process-title">Measure schema</p>
+              <p class="process-detail">Count schema text and match a plan.</p>
+            </div>
+            <span class="process-status">Waiting</span>
+          </li>
+        </ol>
+
+        <!-- Modal Failure Box -->
+        <div id="modal-error-container" class="helper-security-alert" style="background: #fef2f2; border-color: #fecaca; color: #991b1b;" hidden>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="8" x2="12" y2="12"></line>
+            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+          </svg>
+          <div>
+            <strong>Indexing Stopped: </strong>
+            <span id="modal-error-box">Could not complete indexing.</span>
+          </div>
+        </div>
+
+        <!-- Modal Success Box -->
+        <div id="modal-success-container" class="helper-security-alert" style="background: #ecfdf5; border-color: #a7f3d0; color: #065f46;" hidden>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+            <polyline points="22 4 12 14.01 9 11.01"></polyline>
+          </svg>
+          <div>
+            <strong>Schema Analysis &amp; Vector Indexing Complete!</strong>
+            <div id="modal-success-note">Stay on this page, or open SQL Studio when you are ready.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <div id="modal-footer-note" class="modal-status-note">
+          <span class="modal-pulse-spinner"></span>
+          <span>Connecting and analyzing schema, please keep this window open...</span>
+        </div>
+        <div class="modal-footer-actions">
+          <button id="modal-dismiss-btn" type="button" class="button button-sm ghost" hidden>Dismiss &amp; Edit Credentials</button>
+          <a id="modal-studio-btn" href="/ask" class="button button-sm primary" hidden>Open SQL Studio Now &rarr;</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
