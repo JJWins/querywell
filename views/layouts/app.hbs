@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{{default title "AskMySQL Studio"}}</title>
+  <title>{{default title "Querywell"}}</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -13,7 +13,7 @@
   <header class="app-header">
     <div class="wrap app-header-inner">
       <div class="app-header-left">
-        <a href="/ask" class="brand-link" aria-label="AskMySQL Home">
+        <a href="/ask" class="brand-link" aria-label="Querywell home">
           <span class="brand-icon">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
               <ellipse cx="12" cy="5" rx="9" ry="3"></ellipse>
@@ -21,7 +21,7 @@
               <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path>
             </svg>
           </span>
-          <span class="brand-name">AskMySQL</span>
+          <span class="brand-name">Querywell</span>
         </a>
 
         <div class="header-divider"></div>
@@ -37,7 +37,7 @@
             <span class="conn-label"><code>{{connection.username}}@{{connection.host}}:{{connection.port}}/{{default connection.database connection.databaseName}}</code></span>
           </div>
         {{else}}
-          <a href="/connect" class="conn-pill conn-disconnected" title="Connect your MySQL database">
+          <a href="/connect" class="conn-pill conn-disconnected" title="Connect a database">
             <span class="conn-dot"></span>
             <span class="conn-label">No database connected</span>
           </a>

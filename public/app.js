@@ -360,7 +360,7 @@ if (page === "connect") {
         <div class="conn-status-header">
           <div class="conn-status-title">
             <span class="status-indicator-dot online"></span>
-            <span>Active MySQL Source</span>
+            <span>Active database</span>
           </div>
           <div class="conn-header-badges">
             <span class="badge badge-emerald">Read-Only Verified</span>
@@ -469,7 +469,7 @@ if (page === "connect") {
         document.body.removeChild(ta);
       }
       copySyntaxBtn.textContent = "Copied! ✓";
-      showToast("MySQL setup syntax copied to clipboard!", "success");
+      showToast("Database setup syntax copied to clipboard.", "success");
       setTimeout(() => { copySyntaxBtn.textContent = "Copy Syntax"; }, 2000);
     });
   }
@@ -758,7 +758,7 @@ function renderResultTable(rows) {
   return scroll;
 }
 
-function downloadCsv(rows, filename = "askmysql-query.csv") {
+function downloadCsv(rows, filename = "querywell-results.csv") {
   if (!rows || !rows.length) return;
   const headers = Object.keys(rows[0]);
   const escapeCsv = (val) => {
@@ -825,7 +825,7 @@ function renderAnswer(target, event) {
       <span>Export CSV</span>
     `;
     exportBtn.addEventListener("click", () => {
-      downloadCsv(event.rows, `askmysql-query-${Date.now()}.csv`);
+      downloadCsv(event.rows, `querywell-results-${Date.now()}.csv`);
     });
     metaRight.append(exportBtn);
   }

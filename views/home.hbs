@@ -3,16 +3,16 @@
     <div class="hero-badge-row">
       <span class="badge badge-indigo">Zero Row Storage</span>
       <span class="badge badge-emerald">Strict Read-Only Verification</span>
-      <span class="badge badge-outline">MySQL 5.7+ &amp; 8.0+</span>
+      <span class="badge badge-outline">MySQL supported</span>
     </div>
 
     <h1 class="hero-title">
-      Ask your MySQL database in plain English.<br>
-      Get verified SQL and instant rows.
+      Ask your database in plain English.<br>
+      Get verified SQL and the rows.
     </h1>
 
     <p class="hero-subtitle">
-      Give business teams instant data access without bottlenecking engineering. Connect a read-only user in 60 seconds. We index your schema and lookup enums—your customer data never touches our storage.
+      Querywell gives business teams answers without waiting on engineering. Connect a read-only user, and we index the schema. Customer rows stay on your server.
     </p>
 
     <div class="hero-cta-group">
@@ -47,7 +47,7 @@
           <span class="control yellow"></span>
           <span class="control green"></span>
         </div>
-        <div class="workbench-title">AskMySQL Studio &mdash; Production Workspace Preview</div>
+        <div class="workbench-title">Querywell &mdash; Workspace Preview</div>
         <div class="workbench-status">
           <span class="pulse-dot"></span>
           <span>Read-Only User Verified</span>
@@ -72,7 +72,7 @@
           <div class="workbench-telemetry">
             <span class="telemetry-pill"><strong>Path:</strong> Small Schema Full Context (4.8k chars)</span>
             <span class="telemetry-pill"><strong>Model:</strong> Claude 3.5 Sonnet</span>
-            <span class="telemetry-pill"><strong>MySQL Latency:</strong> 11ms</span>
+            <span class="telemetry-pill"><strong>Query latency:</strong> 11ms</span>
             <span class="telemetry-pill"><strong>Rows:</strong> 5</span>
           </div>
 
@@ -184,7 +184,7 @@
         </div>
         <h3 class="feature-title">Strict Read-Only User Probe</h3>
         <p class="feature-text">
-          Before saving your database configuration, our connection probe issues active write tests. If your MySQL user holds <code>INSERT</code>, <code>UPDATE</code>, <code>DELETE</code>, or <code>DROP</code> privileges, registration is rejected immediately.
+          Before a connection is saved, Querywell tests that the database user cannot write. <code>INSERT</code>, <code>UPDATE</code>, <code>DELETE</code>, and <code>DROP</code> privileges are rejected immediately.
         </p>
         <div class="code-snippet-small">
           <code>CREATE USER 'nlq_ro'@'%' IDENTIFIED BY '...';<br>GRANT SELECT ON db.* TO 'nlq_ro'@'%';</code>
@@ -242,7 +242,7 @@
         <div class="step-number">01</div>
         <h3 class="step-title">Provision Read-Only User</h3>
         <p class="step-text">
-          Create a dedicated MySQL user with <code>GRANT SELECT</code> privileges only on your read replica or production instance.
+          Create a dedicated database user with <code>SELECT</code> privileges only. On MySQL, that is a <code>GRANT SELECT</code> user on a read replica or production instance.
         </p>
       </div>
 
@@ -250,7 +250,7 @@
         <div class="step-number">02</div>
         <h3 class="step-title">Auto-Index Schema</h3>
         <p class="step-text">
-          AskMySQL inspects table structures, column definitions, and foreign keys. Schemas are categorized and indexed in seconds.
+          Querywell inspects tables, columns, and foreign keys, then indexes the schema in seconds.
         </p>
       </div>
 
@@ -292,7 +292,7 @@
         <ul class="pricing-features">
           <li><strong>150</strong> verified queries / month</li>
           <li>Up to <strong>30,000</strong> schema characters</li>
-          <li>1 MySQL database connection</li>
+          <li>1 database connection</li>
           <li>Full-context schema inference</li>
           <li>CSV data exports</li>
           <li>Email support</li>
@@ -319,7 +319,7 @@
         <ul class="pricing-features">
           <li><strong>400</strong> verified queries / month</li>
           <li>Up to <strong>120,000</strong> schema characters</li>
-          <li>1 MySQL database connection</li>
+          <li>1 database connection</li>
           <li>Vector retrieval via Qdrant</li>
           <li>Query execution telemetry</li>
           <li>CSV data exports</li>
@@ -346,7 +346,7 @@
         <ul class="pricing-features">
           <li><strong>2,000</strong> verified queries / month</li>
           <li>Over <strong>120,000+</strong> schema characters</li>
-          <li>Up to 3 MySQL database connections</li>
+          <li>Up to 3 database connections</li>
           <li>Dedicated vector indexing partition</li>
           <li>Execution latency SLA</li>
           <li>Dedicated Slack channel support</li>
@@ -370,23 +370,23 @@
 
     <div class="faq-list">
       <div class="faq-item">
-        <h4 class="faq-question">Can AskMySQL accidentally modify, update, or drop tables?</h4>
+        <h4 class="faq-question">Can Querywell modify, update, or drop tables?</h4>
         <p class="faq-answer">
-          No. AskMySQL enforces read-only access at two independent layers. First, before any connection is saved, our probe checks MySQL grants and actively tests that write operations fail. Second, the generated SQL is restricted to read-only <code>SELECT</code> statements.
+          Querywell keeps access read-only in two places. The connection probe checks database grants and confirms writes fail before credentials are saved. Generated SQL is limited to <code>SELECT</code> statements.
         </p>
       </div>
 
       <div class="faq-item">
         <h4 class="faq-question">Do our customer rows leave our database?</h4>
         <p class="faq-answer">
-          No. AskMySQL indexes only metadata: table names, column names, column data types, foreign key relationships, and short categorical lookup values (e.g. status codes like 'active', 'pending'). Your business rows are queried at runtime and sent directly to your browser session; they are never saved in our database.
+          Querywell indexes metadata only: table names, column names, data types, foreign keys, and short categorical lookup values such as status codes. Business rows are queried at runtime and returned to the browser. They are not saved in Querywell.
         </p>
       </div>
 
       <div class="faq-item">
-        <h4 class="faq-question">Can we connect AskMySQL to a MySQL read replica?</h4>
+        <h4 class="faq-question">Can we connect Querywell to a read replica?</h4>
         <p class="faq-answer">
-          Yes. In fact, connecting to an Aurora, RDS, or CloudSQL read replica is our recommended production architecture. This guarantees zero contention on your primary transactional write nodes.
+          Yes. A read replica is the recommended production setup. MySQL on Aurora, RDS, or Cloud SQL keeps query load off the primary write node.
         </p>
       </div>
 

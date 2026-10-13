@@ -125,7 +125,7 @@ export function createApp({ catalog, qdrant }) {
           return;
         }
         const html = await renderView("home", {
-          title: "AskMySQL — Natural Language SQL Engine for MySQL",
+          title: "Querywell — Ask your database in plain English",
         }, { layout: "main" });
         sendHtml(res, 200, html);
         return;
@@ -138,7 +138,7 @@ export function createApp({ catalog, qdrant }) {
           return;
         }
         const html = await renderView("signin", {
-          title: "Sign In — AskMySQL",
+          title: "Sign In — Querywell",
           page: "signin",
         }, { layout: "main" });
         sendHtml(res, 200, html);
@@ -152,7 +152,7 @@ export function createApp({ catalog, qdrant }) {
           return;
         }
         const html = await renderView("signup", {
-          title: "Create Your Workspace — AskMySQL",
+          title: "Create Your Workspace — Querywell",
           page: "signup",
         }, { layout: "main" });
         sendHtml(res, 200, html);
@@ -170,7 +170,7 @@ export function createApp({ catalog, qdrant }) {
           readUsage(catalog, account.workspaceId).catch(() => null),
         ]);
         const html = await renderView("connect", {
-          title: "Database Source — AskMySQL",
+          title: "Database Source — Querywell",
           account: accountJson(account),
           connection,
           usage,
@@ -191,7 +191,7 @@ export function createApp({ catalog, qdrant }) {
           readUsage(catalog, account.workspaceId).catch(() => null),
         ]);
         const html = await renderView("ask", {
-          title: "SQL Studio — AskMySQL",
+          title: "SQL Studio — Querywell",
           account: accountJson(account),
           connection,
           usage,
@@ -213,7 +213,7 @@ export function createApp({ catalog, qdrant }) {
           listApiKeys(catalog, account.workspaceId),
         ]);
         const html = await renderView("keys", {
-          title: "API Keys — AskMySQL",
+          title: "API Keys — Querywell",
           account: accountJson(account),
           connection,
           usage,
