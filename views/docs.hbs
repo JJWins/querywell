@@ -1,0 +1,335 @@
+<section class="docs-hero">
+  <div class="wrap">
+    <span class="section-kicker">Developer API</span>
+    <h1 class="docs-title">Ask API</h1>
+    <p class="docs-lead">
+      Send a plain-English question. Querywell writes a read-only <code>SELECT</code>, runs it on the workspace database, and returns the SQL with the rows.
+      Use the same monthly quota as SQL Studio.
+    </p>
+    <div class="docs-hero-meta">
+      <span class="badge badge-indigo">POST /api/ask</span>
+      <span class="badge badge-subtle">Bearer API key</span>
+      <span class="badge badge-subtle">JSON or NDJSON</span>
+    </div>
+  </div>
+</section>
+
+<section class="docs-body">
+  <div class="wrap docs-layout">
+    <aside class="docs-toc" aria-label="On this page">
+      <p class="docs-toc-label">On this page</p>
+      <a href="#auth">Authentication</a>
+      <a href="#ask">POST /api/ask</a>
+      <a href="#request">Request</a>
+      <a href="#response">JSON response</a>
+      <a href="#examples">Examples</a>
+      <a href="#stream">Streaming</a>
+      <a href="#errors">Errors</a>
+      <a href="#limits">Limits</a>
+    </aside>
+
+    <div class="docs-content">
+      <section id="auth" class="docs-section">
+        <h2>Authentication</h2>
+        <p>
+          Create a key in <a href="/keys">API Keys</a>. Send it on every request. The key is shown once; after that only the prefix is stored.
+        </p>
+        <div class="code-box">
+          <div class="code-box-header"><span>Header</span></div>
+          <pre><code>Authorization: Bearer ask_live_…</code></pre>
+        </div>
+        <p>
+          Keys start with <code>ask_live_</code>. A workspace can have 10 active keys. A signed-in browser session also works, but scripts should use a key.
+        </p>
+      </section>
+
+      <section id="ask" class="docs-section">
+        <h2>POST /api/ask</h2>
+        <p>
+          The workspace must already have a connected, indexed MySQL database. The question is answered against that database.
+        </p>
+        <div class="docs-endpoint">
+          <span class="docs-method">POST</span>
+          <code class="docs-path">/api/ask</code>
+        </div>
+        <div class="table-scroll">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Header</th>
+                <th>Value</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>Authorization</code></td>
+                <td><code>Bearer</code> plus the API key</td>
+              </tr>
+              <tr>
+                <td><code>Content-Type</code></td>
+                <td><code>application/json</code></td>
+              </tr>
+              <tr>
+                <td><code>Accept</code></td>
+                <td><code>application/json</code> for one JSON object. Omit it, or send <code>application/x-ndjson</code>, for a stream of events.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="docs-note">
+          Set <code>Accept: application/json</code> when you want the SQL in one response. Without that header the body is newline-delimited events, which is what SQL Studio uses.
+        </p>
+      </section>
+
+      <section id="request" class="docs-section">
+        <h2>Request body</h2>
+        <div class="code-box">
+          <div class="code-box-header"><span>JSON</span></div>
+          <pre><code>{
+  "question": "How many proposals were submitted last year?"
+}</code></pre>
+        </div>
+        <div class="table-scroll">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Field</th>
+                <th>Type</th>
+                <th>Required</th>
+                <th>Notes</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>question</code></td>
+                <td>string</td>
+                <td>Yes</td>
+                <td>Plain English. Trimmed. 1–2000 characters.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="response" class="docs-section">
+        <h2>JSON response</h2>
+        <p>
+          With <code>Accept: application/json</code>, a successful call returns <code>200</code> and the generated SQL in <code>sql</code>.
+        </p>
+        <div class="code-box">
+          <div class="code-box-header"><span>200</span></div>
+          <pre><code>{
+  "question": "How many proposals were submitted last year?",
+  "sql": "SELECT COUNT(*) AS n FROM PROPOSAL WHERE YEAR(SUBMITTED_DATE) = YEAR(CURDATE()) - 1 LIMIT 100",
+  "columns": ["n"],
+  "rows": [{ "n": 142 }],
+  "explanation": "Counts institutional proposals submitted in the previous calendar year.",
+  "telemetry": {
+    "schema_ms": 12,
+    "synthesis_ms": 1840,
+    "execution_ms": 31
+  },
+  "usage": {
+    "used": 4,
+    "limit": 30
+  }
+}</code></pre>
+        </div>
+        <div class="table-scroll">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Field</th>
+                <th>Type</th>
+                <th>Meaning</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>question</code></td>
+                <td>string</td>
+                <td>The question that was asked.</td>
+              </tr>
+              <tr>
+                <td><code>sql</code></td>
+                <td>string or null</td>
+                <td>The <code>SELECT</code> that ran, including the result limit when Querywell added one.</td>
+              </tr>
+              <tr>
+                <td><code>columns</code></td>
+                <td>string[]</td>
+                <td>Column names from the first row, or an empty list.</td>
+              </tr>
+              <tr>
+                <td><code>rows</code></td>
+                <td>object[]</td>
+                <td>Query results. Dates are ISO-8601 strings. Empty when the statement returned no rows.</td>
+              </tr>
+              <tr>
+                <td><code>explanation</code></td>
+                <td>string</td>
+                <td>Short reason for the SQL.</td>
+              </tr>
+              <tr>
+                <td><code>telemetry</code></td>
+                <td>object</td>
+                <td>Schema, SQL generation, and execution time in milliseconds.</td>
+              </tr>
+              <tr>
+                <td><code>usage</code></td>
+                <td>object</td>
+                <td>Successful questions used this month, and the plan limit.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="examples" class="docs-section">
+        <h2>Examples</h2>
+        <p>Replace the bearer token with a key from <a href="/keys">API Keys</a>. The host in these snippets is this site.</p>
+
+        <div class="code-box">
+          <div class="code-box-header">
+            <span>curl</span>
+            <button class="button button-sm ghost docs-copy" type="button" data-copy="#snippet-curl">Copy</button>
+          </div>
+          <pre><code id="snippet-curl">curl -sS __ORIGIN__/api/ask \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Accept: application/json" \
+  -H "Content-Type: application/json" \
+  -d "{\"question\":\"How many proposals were submitted last year?\"}"</code></pre>
+        </div>
+
+        <div class="code-box">
+          <div class="code-box-header">
+            <span>Python</span>
+            <button class="button button-sm ghost docs-copy" type="button" data-copy="#snippet-python">Copy</button>
+          </div>
+          <pre><code id="snippet-python">import requests
+
+response = requests.post(
+    "__ORIGIN__/api/ask",
+    headers={
+        "Authorization": "Bearer YOUR_API_KEY",
+        "Accept": "application/json",
+    },
+    json={"question": "How many proposals were submitted last year?"},
+)
+data = response.json()
+print(data["sql"])
+print(data["rows"])</code></pre>
+        </div>
+
+        <div class="code-box">
+          <div class="code-box-header">
+            <span>JavaScript</span>
+            <button class="button button-sm ghost docs-copy" type="button" data-copy="#snippet-js">Copy</button>
+          </div>
+          <pre><code id="snippet-js">const response = await fetch("__ORIGIN__/api/ask", {
+  method: "POST",
+  headers: {
+    Authorization: "Bearer YOUR_API_KEY",
+    Accept: "application/json",
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({
+    question: "How many proposals were submitted last year?",
+  }),
+});
+const data = await response.json();
+console.log(data.sql);
+console.log(data.rows);</code></pre>
+        </div>
+      </section>
+
+      <section id="stream" class="docs-section">
+        <h2>Streaming</h2>
+        <p>
+          If <code>Accept</code> is missing or is <code>application/x-ndjson</code>, the response is <code>application/x-ndjson</code>: one JSON object per line.
+        </p>
+        <div class="table-scroll">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>step</th>
+                <th>When</th>
+                <th>Fields</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>status</code></td>
+                <td>While the question is answered</td>
+                <td><code>message</code></td>
+              </tr>
+              <tr>
+                <td><code>done</code></td>
+                <td>After SQL runs</td>
+                <td><code>sql</code>, <code>rows</code>, <code>explanation</code>, <code>used</code>, <code>limit</code>, timings</td>
+              </tr>
+              <tr>
+                <td><code>error</code></td>
+                <td>If answering fails</td>
+                <td><code>message</code></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p>
+          Read lines until <code>done</code> or <code>error</code>. The SQL is on the <code>done</code> event, in <code>sql</code>.
+        </p>
+      </section>
+
+      <section id="errors" class="docs-section">
+        <h2>Errors</h2>
+        <p>JSON errors look like <code>{"error": "…"}</code>.</p>
+        <div class="table-scroll">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Status</th>
+                <th>When</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>400</code></td>
+                <td>Missing or empty question, question longer than 2000 characters, or no indexed database on the workspace.</td>
+              </tr>
+              <tr>
+                <td><code>401</code></td>
+                <td>Missing or invalid API key, or no signed-in session.</td>
+              </tr>
+              <tr>
+                <td><code>402</code></td>
+                <td>The 14-day trial has ended.</td>
+              </tr>
+              <tr>
+                <td><code>429</code></td>
+                <td>The workspace has used its monthly question limit.</td>
+              </tr>
+              <tr>
+                <td><code>502</code></td>
+                <td>The model or database could not complete the question. The body is the public error message.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="limits" class="docs-section">
+        <h2>Limits</h2>
+        <ul class="docs-list">
+          <li>Only a single <code>SELECT</code> is generated and run. Writes are rejected.</li>
+          <li>Results are capped at 100 rows unless the SQL already has a <code>LIMIT</code>.</li>
+          <li>Each successful answer counts against the workspace quota (30 on trial, then the paid plan limit).</li>
+          <li>The connected MySQL user must be read-only. Querywell checks grants before it saves a connection.</li>
+        </ul>
+        <p>
+          Create keys in the app at <a href="/keys">/keys</a>, then call <code>POST /api/ask</code> with <code>Accept: application/json</code> to read <code>sql</code> and <code>rows</code>.
+        </p>
+      </section>
+    </div>
+  </div>
+</section>

@@ -1,4 +1,18 @@
 export const TRIAL_QUESTION_LIMIT = 30;
+export const TRIAL_DAYS = 14;
+const TRIAL_MS = TRIAL_DAYS * 24 * 60 * 60 * 1000;
+
+export function trialEndsAt(createdAt) {
+  const start = createdAt instanceof Date ? createdAt : new Date(createdAt);
+  if (Number.isNaN(start.getTime())) return null;
+  return new Date(start.getTime() + TRIAL_MS);
+}
+
+export function trialHasEnded(createdAt, now = new Date()) {
+  const end = trialEndsAt(createdAt);
+  if (!end) return true;
+  return now.getTime() >= end.getTime();
+}
 
 const PLANS = {
   small: {

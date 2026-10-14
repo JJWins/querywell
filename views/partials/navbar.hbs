@@ -1,29 +1,22 @@
 <nav class="site-nav">
   <div class="wrap nav-inner">
     <div class="nav-brand-group">
-      <a href="/" class="brand-link">
-        <span class="brand-icon">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-            <ellipse cx="12" cy="5" rx="9" ry="3"></ellipse>
-            <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"></path>
-            <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path>
-          </svg>
-        </span>
-        <span class="brand-name">Querywell</span>
+      <a href="/" class="brand-link" aria-label="QueryWell home">
+        {{> brand-logo}}
       </a>
-      <span class="badge badge-subtle">Natural Language SQL</span>
     </div>
 
     <div class="nav-links">
       <a href="/#how-it-works" class="nav-item">How It Works</a>
-      <a href="/#architecture" class="nav-item">Security & Routing</a>
+      <a href="/#architecture" class="nav-item">Security &amp; Routing</a>
       <a href="/#pricing" class="nav-item">Pricing</a>
+      <a href="/docs" class="nav-item {{#if (eq page "docs")}}active{{/if}}">API</a>
       <a href="/#faq" class="nav-item">FAQ</a>
     </div>
 
     <div class="nav-actions">
       <a href="/signin" class="button button-sm ghost">Sign in</a>
-      <a href="/signup" class="button button-sm primary">Start 30-Day Trial</a>
+      <a href="/signup" class="button button-sm primary">Start Free Trial</a>
     </div>
   </div>
 </nav>

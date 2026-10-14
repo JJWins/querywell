@@ -1,4 +1,4 @@
-import { questionLimitForPlan } from "../billing/plans.js";
+import { questionLimitForPlan, trialEndsAt, trialHasEnded } from "../billing/plans.js";
 import { decryptSecret } from "../db/crypto.js";
 import { sourceConfig } from "../db/source.js";
 import { answerQuestion } from "../engine/route.js";
@@ -88,10 +88,13 @@ export function askJsonBody(question, done) {
 
 export async function readUsage(catalog, workspaceId) {
   const [plans] = await catalog.execute(
-    `SELECT plan_code FROM workspaces WHERE id = ?`,
+    `SELECT plan_code, created_at FROM workspaces WHERE id = ?`,
     [workspaceId]
   );
   const planCode = plans[0]?.plan_code || "trial";
+  const onTrial = String(planCode).toLowerCase() === "trial";
+  const endsAt = onTrial ? trialEndsAt(plans[0]?.created_at) : null;
+  const expired = onTrial && trialHasEnded(plans[0]?.created_at);
   const [counts] = await catalog.execute(
     `SELECT COUNT(*) AS n
      FROM usage_events
@@ -105,6 +108,8 @@ export async function readUsage(catalog, workspaceId) {
     used: Number(counts[0].n),
     limit: questionLimitForPlan(planCode),
     planCode,
+    trialEndsAt: endsAt ? endsAt.toISOString() : null,
+    expired,
   };
 }
 
@@ -143,6 +148,9 @@ export async function askQuestion({ catalog, qdrant, workspaceId, body, onEvent 
   }
 
   const usage = await readUsage(catalog, workspaceId);
+  if (usage.expired) {
+    throw new HttpError(402, "The 14-day free trial has ended. Subscribe to keep asking questions.");
+  }
   if (usage.used >= usage.limit) {
     throw new HttpError(429, quotaMessage(usage.used, usage.limit));
   }

@@ -5,6 +5,7 @@ function pageName() {
   if (path === "/connect") return "connect";
   if (path === "/keys") return "keys";
   if (path === "/ask") return "ask";
+  if (path === "/docs") return "docs";
   if (path === "/") return "home";
   return document.body.dataset.page || "home";
 }
@@ -141,7 +142,7 @@ function renderFit(target, event, planCode) {
   note.style.cssText = "font-size: 0.82rem; color: var(--text-muted); margin-top: 0.85rem;";
   note.textContent = PAID_PLANS.has(planCode)
     ? `This workspace is on the ${planLabel(planCode)} plan.`
-    : "The workspace is on the free trial.";
+    : "The workspace is on a 14-day free trial.";
   target.append(list, note);
 }
 
@@ -468,7 +469,7 @@ if (page === "connect") {
         document.execCommand("copy");
         document.body.removeChild(ta);
       }
-      copySyntaxBtn.textContent = "Copied! ✓";
+      copySyntaxBtn.textContent = "Copied!";
       showToast("Database setup syntax copied to clipboard.", "success");
       setTimeout(() => { copySyntaxBtn.textContent = "Copy Syntax"; }, 2000);
     });
@@ -896,7 +897,7 @@ function renderAnswer(target, event) {
     const sqlHeader = document.createElement("div");
     sqlHeader.className = "sql-header";
     const sqlTitle = document.createElement("span");
-    sqlTitle.textContent = "Synthesized Read-Only SQL Query";
+    sqlTitle.textContent = "Generated Read-Only SQL";
 
     const copyBtn = document.createElement("button");
     copyBtn.type = "button";
@@ -922,8 +923,8 @@ function renderAnswer(target, event) {
           document.body.removeChild(ta);
         } catch {}
       }
-      copyBtn.textContent = "Copied! ✓";
-      showToast("Synthesized SQL query copied to clipboard!", "success");
+      copyBtn.textContent = "Copied!";
+      showToast("SQL query copied to clipboard", "success");
       setTimeout(() => { copyBtn.textContent = "Copy SQL"; }, 2000);
     });
 
@@ -975,7 +976,9 @@ function showUsage(usage) {
     return;
   }
   line.hidden = false;
-  line.textContent = `${usage.used} of ${usage.limit} queries used this month.`;
+  line.textContent = usage.expired
+    ? "14-day trial ended"
+    : `${usage.used} of ${usage.limit} queries used this month.`;
 
   const fill = document.querySelector(".usage-bar-fill");
   if (fill && usage.limit > 0) {
@@ -1039,6 +1042,8 @@ if (page === "ask") {
     form.addEventListener("submit", async (event) => {
       event.preventDefault();
       showError("");
+      const emptyState = document.querySelector("#studio-empty-state");
+      if (emptyState) emptyState.hidden = true;
       const progress = document.querySelector("#progress");
       if (progress) progress.replaceChildren();
       if (answer) answer.hidden = true;
@@ -1063,6 +1068,7 @@ if (page === "ask") {
           if (item.step === "error") throw new Error(item.message || "Could not answer that question.");
           if (item.step === "done") {
             finished = true;
+            if (emptyState) emptyState.hidden = true;
             if (item.executeError) showError(item.executeError);
             if (answer) renderAnswer(answer, item);
             showUsage(item);
@@ -1071,6 +1077,7 @@ if (page === "ask") {
         if (!finished) throw new Error("The question stopped before it finished.");
       } catch (err) {
         showError(err.message);
+        if (emptyState && !answer?.children.length) emptyState.hidden = false;
         const usageResponse = await fetch("/api/usage").catch(() => null);
         if (usageResponse?.ok) showUsage(await usageResponse.json());
       } finally {
@@ -1211,3 +1218,174 @@ if (page === "keys") {
     }
   });
 }
+
+if (page === "docs") {
+  const origin = location.origin;
+  document.querySelectorAll("pre code").forEach((code) => {
+    if (code.textContent.includes("__ORIGIN__")) {
+      code.textContent = code.textContent.replaceAll("__ORIGIN__", origin);
+    }
+  });
+
+  document.querySelectorAll(".docs-copy").forEach((button) => {
+    button.addEventListener("click", async () => {
+      const target = document.querySelector(button.dataset.copy || "");
+      const text = target?.textContent || "";
+      const previous = button.textContent;
+      if (!text) return;
+      try {
+        if (!navigator.clipboard?.writeText) throw new Error("Clipboard is unavailable.");
+        await navigator.clipboard.writeText(text);
+        button.textContent = "Copied";
+        showToast("Snippet copied to clipboard!", "success");
+        setTimeout(() => {
+          button.textContent = previous;
+        }, 1200);
+      } catch {
+        showError("Could not copy. Select the snippet and copy it manually.");
+      }
+    });
+  });
+}
+
+// Landing page scenario switcher
+if (page === "home") {
+  const scenarioData = {
+    revenue: {
+      prompt: '"Which 5 customers generated the highest total revenue this quarter, and what is their current plan status?"',
+      meta: "Generated in 1.4s",
+      telemetry: `
+        <span class="telemetry-pill"><strong>Path:</strong> Small Schema Full Context (4.8k chars)</span>
+        <span class="telemetry-pill"><strong>Model:</strong> Claude 3.5 Sonnet</span>
+        <span class="telemetry-pill"><strong>Query Latency:</strong> 11ms</span>
+        <span class="telemetry-pill"><strong>Rows:</strong> 5</span>
+      `,
+      sql: `<span class="kw">SELECT</span>
+  u.id <span class="kw">AS</span> customer_id,
+  u.company_name,
+  s.plan_code <span class="kw">AS</span> current_plan,
+  <span class="fn">COUNT</span>(o.id) <span class="kw">AS</span> orders_count,
+  <span class="fn">SUM</span>(o.amount_usd) <span class="kw">AS</span> total_revenue_usd
+<span class="kw">FROM</span> users u
+<span class="kw">JOIN</span> subscriptions s <span class="kw">ON</span> s.user_id = u.id
+<span class="kw">JOIN</span> orders o <span class="kw">ON</span> o.user_id = u.id
+<span class="kw">WHERE</span> o.status = <span class="str">'paid'</span>
+  <span class="kw">AND</span> o.created_at &gt;= <span class="str">'2026-07-01'</span>
+<span class="kw">GROUP BY</span> u.id, u.company_name, s.plan_code
+<span class="kw">ORDER BY</span> total_revenue_usd <span class="kw">DESC</span>
+<span class="kw">LIMIT</span> <span class="num">5</span>;`,
+      tableTitle: "Execution Output",
+      tableCount: "5 rows returned",
+      headers: ["customer_id", "company_name", "current_plan", "orders_count", "total_revenue_usd"],
+      rows: [
+        ["<code>usr_9824</code>", "Acme Logistics Global", '<span class="status-badge enterprise">scale</span>', "142", "$42,850.00"],
+        ["<code>usr_7719</code>", "CloudScale Networks", '<span class="status-badge enterprise">scale</span>', "98", "$31,200.00"],
+        ["<code>usr_4102</code>", "Apex Retail Systems", '<span class="status-badge growth">growth</span>', "64", "$18,440.00"],
+        ["<code>usr_5591</code>", "Beacon Health Analytics", '<span class="status-badge growth">growth</span>', "41", "$12,980.00"],
+        ["<code>usr_1028</code>", "Nordic FinTech AS", '<span class="status-badge starter">starter</span>', "27", "$8,650.00"]
+      ]
+    },
+    orders: {
+      prompt: '"Show recent unfulfilled orders over $500 along with the customer company name and contact email"',
+      meta: "Generated in 0.9s",
+      telemetry: `
+        <span class="telemetry-pill"><strong>Path:</strong> Small Schema Full Context (4.8k chars)</span>
+        <span class="telemetry-pill"><strong>Model:</strong> Claude 3.5 Sonnet</span>
+        <span class="telemetry-pill"><strong>Query Latency:</strong> 8ms</span>
+        <span class="telemetry-pill"><strong>Rows:</strong> 4</span>
+      `,
+      sql: `<span class="kw">SELECT</span>
+  o.id <span class="kw">AS</span> order_id,
+  u.company_name,
+  u.email <span class="kw">AS</span> contact_email,
+  o.amount_usd,
+  o.status <span class="kw">AS</span> order_status,
+  o.created_at
+<span class="kw">FROM</span> orders o
+<span class="kw">JOIN</span> users u <span class="kw">ON</span> u.id = o.user_id
+<span class="kw">WHERE</span> o.status = <span class="str">'pending_fulfillment'</span>
+  <span class="kw">AND</span> o.amount_usd &gt;= <span class="num">500.00</span>
+<span class="kw">ORDER BY</span> o.created_at <span class="kw">DESC</span>
+<span class="kw">LIMIT</span> <span class="num">10</span>;`,
+      tableTitle: "Execution Output",
+      tableCount: "4 rows returned",
+      headers: ["order_id", "company_name", "contact_email", "amount_usd", "order_status", "created_at"],
+      rows: [
+        ["<code>ord_8912</code>", "Vanguard Logistics", "ops@vanguardlog.com", "$1,450.00", '<span class="status-badge growth">pending_fulfillment</span>', "2026-10-12 14:22"],
+        ["<code>ord_8840</code>", "Cascade Digital", "billing@cascadedigital.io", "$890.00", '<span class="status-badge growth">pending_fulfillment</span>', "2026-10-11 09:15"],
+        ["<code>ord_8795</code>", "Solaris Health", "purchasing@solarishealth.org", "$2,100.00", '<span class="status-badge growth">pending_fulfillment</span>', "2026-10-10 18:40"],
+        ["<code>ord_8721</code>", "Nexus Robotics", "admin@nexusrobotics.ai", "$620.00", '<span class="status-badge growth">pending_fulfillment</span>', "2026-10-09 11:05"]
+      ]
+    },
+    churn: {
+      prompt: '"How many active vs canceled subscriptions do we have by plan tier, with total monthly recurring revenue?"',
+      meta: "Generated in 1.1s",
+      telemetry: `
+        <span class="telemetry-pill"><strong>Path:</strong> Small Schema Full Context (4.8k chars)</span>
+        <span class="telemetry-pill"><strong>Model:</strong> Claude 3.5 Sonnet</span>
+        <span class="telemetry-pill"><strong>Query Latency:</strong> 14ms</span>
+        <span class="telemetry-pill"><strong>Rows:</strong> 6</span>
+      `,
+      sql: `<span class="kw">SELECT</span>
+  s.plan_code,
+  s.status <span class="kw">AS</span> subscription_status,
+  <span class="fn">COUNT</span>(s.id) <span class="kw">AS</span> total_subscriptions,
+  <span class="fn">SUM</span>(s.monthly_price_usd) <span class="kw">AS</span> total_mrr_usd
+<span class="kw">FROM</span> subscriptions s
+<span class="kw">GROUP BY</span> s.plan_code, s.status
+<span class="kw">ORDER BY</span> s.plan_code <span class="kw">ASC</span>, total_mrr_usd <span class="kw">DESC</span>;`,
+      tableTitle: "Execution Output",
+      tableCount: "6 rows returned",
+      headers: ["plan_code", "subscription_status", "total_subscriptions", "total_mrr_usd"],
+      rows: [
+        ['<span class="status-badge starter">starter</span>', '<span class="status-badge enterprise">active</span>', "420", "$16,380.00"],
+        ['<span class="status-badge starter">starter</span>', '<span class="status-badge" style="background:#fee2e2;color:#991b1b;">canceled</span>', "38", "$1,482.00"],
+        ['<span class="status-badge growth">growth</span>', '<span class="status-badge enterprise">active</span>', "184", "$23,736.00"],
+        ['<span class="status-badge growth">growth</span>', '<span class="status-badge" style="background:#fee2e2;color:#991b1b;">canceled</span>', "12", "$1,548.00"],
+        ['<span class="status-badge enterprise">scale</span>', '<span class="status-badge enterprise">active</span>', "48", "$16,752.00"],
+        ['<span class="status-badge enterprise">scale</span>', '<span class="status-badge" style="background:#fee2e2;color:#991b1b;">canceled</span>', "2", "$698.00"]
+      ]
+    }
+  };
+
+  const scenarioButtons = document.querySelectorAll(".scenario-btn");
+  scenarioButtons.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const scenarioKey = btn.dataset.scenario;
+      const data = scenarioData[scenarioKey];
+      if (!data) return;
+
+      scenarioButtons.forEach((b) => b.classList.remove("active"));
+      btn.classList.add("active");
+
+      const promptText = document.querySelector("#demo-prompt-text");
+      const promptMeta = document.querySelector("#demo-prompt-meta");
+      const telemetry = document.querySelector("#demo-telemetry");
+      const sqlCode = document.querySelector("#demo-sql-code");
+      const tableTitle = document.querySelector("#demo-table-title");
+      const tableCount = document.querySelector("#demo-table-count");
+      const dataTable = document.querySelector("#demo-data-table");
+
+      if (promptText) promptText.textContent = data.prompt;
+      if (promptMeta) promptMeta.textContent = data.meta;
+      if (telemetry) telemetry.innerHTML = data.telemetry;
+      if (sqlCode) sqlCode.innerHTML = data.sql;
+      if (tableTitle) tableTitle.textContent = data.tableTitle;
+      if (tableCount) tableCount.textContent = data.tableCount;
+
+      if (dataTable) {
+        const thead = dataTable.querySelector("thead");
+        const tbody = dataTable.querySelector("tbody");
+        if (thead) {
+          thead.innerHTML = `<tr>${data.headers.map((h) => `<th>${h}</th>`).join("")}</tr>`;
+        }
+        if (tbody) {
+          tbody.innerHTML = data.rows
+            .map((r) => `<tr>${r.map((cell) => `<td>${cell}</td>`).join("")}</tr>`)
+            .join("");
+        }
+      }
+    });
+  });
+}
+

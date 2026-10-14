@@ -19,11 +19,13 @@ const publicDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..
 const assets = {
   "/app.css": "app.css",
   "/app.js": "app.js",
+  "/QueryWell_Logo.png": "QueryWell_Logo.png",
 };
 const types = {
   ".html": "text/html; charset=utf-8",
   ".css": "text/css; charset=utf-8",
   ".js": "text/javascript; charset=utf-8",
+  ".png": "image/png",
 };
 
 function sendHtml(res, status, html, extraHeaders = {}) {
@@ -140,6 +142,15 @@ export function createApp({ catalog, qdrant }) {
         const html = await renderView("signin", {
           title: "Sign In — Querywell",
           page: "signin",
+        }, { layout: "main" });
+        sendHtml(res, 200, html);
+        return;
+      }
+
+      if (req.method === "GET" && pathname === "/docs") {
+        const html = await renderView("docs", {
+          title: "Ask API — Querywell",
+          page: "docs",
         }, { layout: "main" });
         sendHtml(res, 200, html);
         return;

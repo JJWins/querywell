@@ -65,7 +65,7 @@
             <span class="metric-val"><strong>{{formatNumber connection.schemaTextChars}}</strong> characters</span>
           </div>
           <div class="conn-metric">
-            <span class="metric-label">AI Engine Routing</span>
+            <span class="metric-label">Routing Engine</span>
             <span class="metric-val">
               {{#if (eq connection.path "small")}}
                 Direct Full-Schema (Small)
@@ -240,6 +240,33 @@
             <line x1="12" y1="16" x2="12.01" y2="16"></line>
           </svg>
           <span>If the user has <code>DROP</code>, <code>INSERT</code>, or <code>ALTER</code> rights, connection setup fails automatically.</span>
+        </div>
+
+        <div class="connect-safety-checklist">
+          <div class="safety-checklist-header">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="text-success"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            <strong>Zero Customer Row Retention Guarantee</strong>
+          </div>
+          <ul class="safety-checklist-items">
+            <li>
+              <span class="checklist-icon check">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              </span>
+              <span><strong>Indexed:</strong> Table schemas, column types, foreign keys, &amp; enums.</span>
+            </li>
+            <li>
+              <span class="checklist-icon lock">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+              </span>
+              <span><strong>Never Stored:</strong> Customer PII, table row data, financial records, passwords.</span>
+            </li>
+            <li>
+              <span class="checklist-icon stream">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 17 10 11 4 5"></polyline><line x1="12" y1="19" x2="20" y2="19"></line></svg>
+              </span>
+              <span><strong>In-Memory:</strong> Queries stream rows directly to your browser session.</span>
+            </li>
+          </ul>
         </div>
       </div>
     </div>

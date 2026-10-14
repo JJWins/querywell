@@ -4,7 +4,7 @@ import { randomBytes, randomUUID } from "node:crypto";
 import { encryptSecret, decryptSecret } from "../src/db/crypto.js";
 import { ensureCatalogTables } from "../src/db/migrate.js";
 import { catalogConfig, createCatalogPool, ensureCatalogDatabase } from "../src/db/pool.js";
-import { planForPath, TRIAL_QUESTION_LIMIT } from "../src/billing/plans.js";
+import { planForPath, TRIAL_DAYS, TRIAL_QUESTION_LIMIT, trialHasEnded } from "../src/billing/plans.js";
 import {
   appendCompactTableNames,
   choosePath,
@@ -50,6 +50,10 @@ function unitChecks() {
   assert(planForPath("large").questionLimit === 2000, "Scale question limit");
   assert(planForPath("large").connectionLimit === 3, "Scale connection limit");
   assert(TRIAL_QUESTION_LIMIT === 30, "trial question limit");
+  assert(TRIAL_DAYS === 14, "trial lasts 14 days");
+  const started = new Date("2026-01-01T00:00:00Z");
+  assert(!trialHasEnded(started, new Date("2026-01-14T23:59:59Z")), "trial is open through day 14");
+  assert(trialHasEnded(started, new Date("2026-01-15T00:00:00Z")), "trial ends after 14 days");
 
   assert(isSafeSelect("SELECT id FROM orders"), "select is allowed");
   assert(!isSafeSelect("SELECT id FROM orders; DELETE FROM orders"), "multi-statement blocked");

@@ -66,7 +66,7 @@ export async function registerPartials() {
  * @returns {Promise<string>} Rendered HTML string
  */
 export async function renderView(viewName, data = {}, options = { layout: "main" }) {
-  if (!partialsRegistered) {
+  if (!partialsRegistered || process.env.NODE_ENV !== "production") {
     await registerPartials();
   }
 
