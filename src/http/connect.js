@@ -163,14 +163,14 @@ export async function readConnection(catalog, workspaceId) {
 
 export async function indexConnection({ catalog, qdrant, workspaceId, body, onEvent }) {
   const source = parseSource(body);
+  onEvent({ step: "access", state: "active", detail: "Checking grants" });
+  await probeReadOnly(source);
+  onEvent({ step: "access", state: "done", detail: "SELECT only" });
   if (running.has(workspaceId)) {
     throw new HttpError(409, "Indexing is already running for this workspace.");
   }
   running.add(workspaceId);
   try {
-    onEvent({ step: "access", state: "active", detail: "Checking grants" });
-    await probeReadOnly(source);
-    onEvent({ step: "access", state: "done", detail: "SELECT only" });
     const ciphertext = encryptSecret(source.password);
     const connectionId = await saveConnection(catalog, workspaceId, source, ciphertext);
     let indexed;

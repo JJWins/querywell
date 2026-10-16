@@ -8,6 +8,7 @@
   },
   "scripts": {
     "start": "node src/http/server.js",
+    "test": "node --test src/engine/sql.test.js src/index/readonly.test.js",
     "prove:paths": "node scripts/prove-paths.js"
   },
   "dependencies": {

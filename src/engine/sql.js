@@ -1,7 +1,6 @@
-import Anthropic from "@anthropic-ai/sdk";
+import { completeSql } from "./models.js";
 
 const RESULT_LIMIT = Number(process.env.RESULT_LIMIT || 100);
-const MODEL = process.env.ANTHROPIC_MODEL || "claude-sonnet-4-6";
 
 const CANONICAL_RULES = `Canonical joins for this app:
 - Institutional proposal people: PROPOSAL_PERSONS JOIN PROPOSAL ON PROPOSAL_ID. Never use EPS_PROPOSAL_PERSONS or ERA_PROPOSAL_PERSON_ROLES for institutional proposals.
@@ -87,42 +86,131 @@ export async function generateSQL(
   const system = buildSystemPrompt(schemaText, fewshots, termLinks, options);
   if (typeof options.onPrompt === "function") options.onPrompt(system);
 
-  const client = new Anthropic();
-  const response = await client.messages.create({
-    model: MODEL,
-    max_tokens: 1024,
+  const completion = await completeSql({
+    provider: options.provider,
     system,
     messages: [{ role: "user", content: question }, ...history],
   });
 
-  const parsed = parseModelJson(response.content?.[0]?.text);
-  const usage = response.usage || {};
+  const parsed = parseModelJson(completion.text);
   parsed.estimated_tokens =
-    Number(usage.input_tokens || 0) + Number(usage.output_tokens || 0);
+    Number(completion.inputTokens || 0) + Number(completion.outputTokens || 0);
+  parsed.provider = completion.provider;
+  parsed.model = completion.model;
+  parsed.modelLabel = completion.label;
   return parsed;
 }
 
-export function isSafeSelect(sql) {
-  const trimmed = String(sql || "").trim().replace(/;+$/, "");
-  if (!trimmed || /;/.test(trimmed)) return false;
-  if (!/^\s*select\b/i.test(trimmed)) return false;
-  if (
-    /\b(insert|update|delete|drop|alter|truncate|create|grant|revoke|replace|load|outfile|dumpfile|into\s+outfile)\b/i.test(
-      trimmed
-    )
-  ) {
-    return false;
+const WRITE_VERB =
+  /\b(insert|update|delete|drop|alter|truncate|create|grant|revoke|replace\s+into|load\s+data|load_file|outfile|dumpfile|lock\s+tables|unlock\s+tables|rename|call|handler|prepare|deallocate|execute|binlog|kill|shutdown|purge|flush|optimize|repair|install|uninstall|import|clone)\b/i;
+
+function stripSqlComments(sql) {
+  const source = String(sql || "");
+  let out = "";
+  let i = 0;
+  while (i < source.length) {
+    if (source.startsWith("/*!", i)) {
+      const end = source.indexOf("*/", i + 3);
+      if (end === -1) return "";
+      out += ` ${source.slice(i + 3, end).replace(/^\d+\s*/, "")} `;
+      i = end + 2;
+      continue;
+    }
+    if (source.startsWith("/*", i)) {
+      const end = source.indexOf("*/", i + 2);
+      if (end === -1) return "";
+      i = end + 2;
+      continue;
+    }
+    if (
+      source.startsWith("--", i) &&
+      (i === 0 || /\s/.test(source[i - 1])) &&
+      (source[i + 2] === undefined || /\s/.test(source[i + 2]))
+    ) {
+      const end = source.indexOf("\n", i);
+      i = end === -1 ? source.length : end + 1;
+      continue;
+    }
+    if (source[i] === "#") {
+      const end = source.indexOf("\n", i);
+      i = end === -1 ? source.length : end + 1;
+      continue;
+    }
+    const quote = source[i];
+    if (quote === "'" || quote === '"' || quote === "`") {
+      out += quote;
+      i += 1;
+      while (i < source.length) {
+        if (source[i] === "\\") {
+          out += source.slice(i, i + 2);
+          i += 2;
+          continue;
+        }
+        if (source[i] === quote) {
+          out += quote;
+          i += 1;
+          if (source[i] === quote) {
+            out += quote;
+            i += 1;
+            continue;
+          }
+          break;
+        }
+        out += source[i];
+        i += 1;
+      }
+      continue;
+    }
+    out += source[i];
+    i += 1;
   }
+  return out.replace(/\u0000/g, " ");
+}
+
+export function isSafeSelect(sql) {
+  const trimmed = stripSqlComments(sql).trim().replace(/;+\s*$/g, "");
+  if (!trimmed || /;/.test(trimmed)) return false;
+  if (/into\s+(outfile|dumpfile)\b/i.test(trimmed)) return false;
+  if (WRITE_VERB.test(trimmed)) return false;
+  if (!/^(select|with)\b/i.test(trimmed)) return false;
+  if (/^with\b/i.test(trimmed) && !/\bselect\b/i.test(trimmed)) return false;
   return true;
 }
 
 export function withLimit(sql, limit = RESULT_LIMIT) {
-  const trimmed = sql.trim().replace(/;+$/, "");
+  const trimmed = String(sql || "").trim().replace(/;+\s*$/g, "");
   if (/\blimit\s+\d+/i.test(trimmed)) return trimmed;
   if (/\bcount\s*\(/i.test(trimmed) && !/\bgroup\s+by\b/i.test(trimmed)) {
     return trimmed;
   }
-  return `${trimmed} LIMIT ${limit}`;
+  return `${trimmed}\nLIMIT ${limit}`;
+}
+
+export async function runReadOnlySelect(sourcePool, sql) {
+  const connection = await sourcePool.getConnection();
+  try {
+    await connection.query("SET SESSION TRANSACTION READ ONLY");
+    await connection.query("START TRANSACTION READ ONLY");
+    try {
+      const [rows] = await connection.query(sql);
+      await connection.query("COMMIT");
+      return rows;
+    } catch (err) {
+      try {
+        await connection.query("ROLLBACK");
+      } catch {
+        /* still throw the query error */
+      }
+      throw err;
+    }
+  } finally {
+    try {
+      await connection.query("SET SESSION TRANSACTION READ WRITE");
+    } catch {
+      /* connection may already be unusable */
+    }
+    connection.release();
+  }
 }
 
 function serializeRows(rows) {
@@ -175,10 +263,15 @@ export async function executeWithRetries({
     }
 
     executedSql = withLimit(generated.query);
+    if (!isSafeSelect(executedSql)) {
+      executeError = "Generated SQL was not a single SELECT and was not run.";
+      log(executeError);
+      break;
+    }
     const runStarted = Date.now();
     log(`running SQL, attempt ${attempt + 1}`);
     try {
-      const [resultRows] = await sourcePool.query(executedSql);
+      const resultRows = await runReadOnlySelect(sourcePool, executedSql);
       rows = serializeRows(resultRows);
       executeError = null;
       executionMs = Date.now() - runStarted;
@@ -188,6 +281,7 @@ export async function executeWithRetries({
       executeError = err.message;
       executionMs = Date.now() - runStarted;
       log(`SQL failed in ${executionMs} ms: ${err.message}`);
+      if (err?.errno === 1792 || /read[- ]only/i.test(String(err?.message || ""))) break;
       if (attempt === 2) break;
       history.push(
         { role: "assistant", content: JSON.stringify({

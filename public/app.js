@@ -142,7 +142,7 @@ function renderFit(target, event, planCode) {
   note.style.cssText = "font-size: 0.82rem; color: var(--text-muted); margin-top: 0.85rem;";
   note.textContent = PAID_PLANS.has(planCode)
     ? `This workspace is on the ${planLabel(planCode)} plan.`
-    : "The workspace is on a 14-day free trial.";
+    : "The workspace is on a 14-day trial with 30 questions.";
   target.append(list, note);
 }
 
@@ -174,20 +174,6 @@ async function startBilling(button) {
     showError(err.message);
     button.disabled = false;
   }
-}
-
-function appendProgress(message) {
-  const list = document.querySelector("#progress");
-  if (!list) return;
-  const item = document.createElement("li");
-  item.className = "stepper-item";
-  const icon = document.createElement("span");
-  icon.className = "stepper-icon";
-  icon.textContent = "✓";
-  const text = document.createElement("span");
-  text.textContent = message;
-  item.append(icon, text);
-  list.append(item);
 }
 
 async function eachEvent(response, onEvent) {
@@ -448,6 +434,8 @@ if (page === "connect") {
   const progressPhase = document.querySelector("#progress-phase");
   const progressPercent = document.querySelector("#progress-percent");
   const processState = document.querySelector("#process-state");
+  let connectAbort = null;
+  let indexFailed = false;
 
   const copySyntaxBtn = document.querySelector("#copy-syntax-btn");
   if (copySyntaxBtn) {
@@ -475,15 +463,23 @@ if (page === "connect") {
     });
   }
 
-  if (modalDismissBtn) {
-    modalDismissBtn.addEventListener("click", () => {
-      if (indexModal) indexModal.hidden = true;
-      const button = form?.querySelector("button");
-      if (button) button.disabled = false;
-      form?.removeAttribute("aria-busy");
-      document.querySelector("#db-password")?.focus();
-    });
+  function leaveIndexModal() {
+    connectAbort?.abort();
+    if (indexModal) indexModal.hidden = true;
+    const button = form?.querySelector("button");
+    if (button) button.disabled = false;
+    form?.removeAttribute("aria-busy");
+    document.querySelector("#db-password")?.focus();
   }
+
+  if (modalDismissBtn) {
+    modalDismissBtn.addEventListener("click", leaveIndexModal);
+  }
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key !== "Escape" || !indexModal || indexModal.hidden) return;
+    leaveIndexModal();
+  });
 
   const processDefaults = new Map();
   document.querySelectorAll(".process-step").forEach((step) => {
@@ -549,8 +545,12 @@ if (page === "connect") {
     if (modalErrorContainer) modalErrorContainer.hidden = true;
     if (modalSuccessContainer) modalSuccessContainer.hidden = true;
     if (modalFooterNote) modalFooterNote.hidden = false;
-    if (modalDismissBtn) modalDismissBtn.hidden = true;
+    if (modalDismissBtn) {
+      modalDismissBtn.hidden = false;
+      modalDismissBtn.textContent = "Cancel";
+    }
     if (modalStudioBtn) modalStudioBtn.hidden = true;
+    indexFailed = false;
 
     setProcessState("Running", "indigo");
     setProgress(5, "Verifying credentials and read-only grants...");
@@ -566,20 +566,26 @@ if (page === "connect") {
     });
   }
 
+  function failIndex(message) {
+    if (indexFailed) return;
+    indexFailed = true;
+    const text = message || "Could not connect.";
+    const active = document.querySelector('.process-step[data-state="active"]');
+    setProcessStep(active?.dataset.step || "access", "error", text);
+    setProcessState("Failed", "error");
+    if (modalFooterNote) modalFooterNote.hidden = true;
+    if (modalErrorBox) modalErrorBox.textContent = text;
+    if (modalErrorContainer) modalErrorContainer.hidden = false;
+    if (modalDismissBtn) {
+      modalDismissBtn.hidden = false;
+      modalDismissBtn.textContent = "Back";
+    }
+    showError(text);
+  }
+
   function showProcessEvent(item) {
     if (item.step === "error") {
-      const active = document.querySelector('.process-step[data-state="active"]');
-      const target = active?.dataset.step || "access";
-      setProcessStep(target, "error", item.message || "Could not index that database.");
-      setProcessState("Failed", "error");
-      if (modalFooterNote) modalFooterNote.hidden = true;
-      if (modalErrorBox) modalErrorBox.textContent = item.message || "Failed to connect or index database.";
-      if (modalErrorContainer) modalErrorContainer.hidden = false;
-      if (modalDismissBtn) {
-        modalDismissBtn.hidden = false;
-        modalDismissBtn.textContent = "Dismiss & Edit Credentials";
-      }
-      showToast(item.message || "Database connection failed.", "error");
+      failIndex(item.message || "Could not index that database.");
       return;
     }
 
@@ -640,10 +646,12 @@ if (page === "connect") {
       const button = form.querySelector("button");
       button.disabled = true;
       form.setAttribute("aria-busy", "true");
+      connectAbort = new AbortController();
       try {
         const response = await fetch("/api/connection", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
+          signal: connectAbort.signal,
           body: JSON.stringify({
             host: field("#host"),
             port: Number(field("#port")),
@@ -674,41 +682,16 @@ if (page === "connect") {
             });
           }
         });
-        if (failure) throw failure;
-        if (!finished) throw new Error("Indexing stopped before it finished.");
+        if (!failure && !finished) failIndex("Indexing stopped before it finished.");
       } catch (err) {
-        showError(err.message);
+        if (err?.name === "AbortError") return;
+        failIndex(err.message);
       } finally {
         button.disabled = false;
         form.removeAttribute("aria-busy");
       }
     });
   }
-}
-
-function summaryText(summary) {
-  if (summary?.kind === "full") {
-    return `Full schema: ${summary.tableCount} tables, ${summary.schemaTextChars} characters`;
-  }
-  const names = summary?.tables?.length ? summary.tables.join(", ") : "(none)";
-  return `Retrieved tables: ${names}`;
-}
-
-function addAnswerRow(list, label, valueNode) {
-  const row = document.createElement("div");
-  const term = document.createElement("dt");
-  const detail = document.createElement("dd");
-  term.textContent = label;
-  detail.append(valueNode);
-  row.append(term, detail);
-  list.append(row);
-}
-
-function textBlock(className, value) {
-  const node = document.createElement("p");
-  node.className = className;
-  node.textContent = value || "";
-  return node;
 }
 
 function renderResultTable(rows) {
@@ -786,185 +769,129 @@ function downloadCsv(rows, filename = "querywell-results.csv") {
   URL.revokeObjectURL(url);
 }
 
-function renderAnswer(target, event) {
+async function copyText(text) {
+  try {
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(text);
+      return;
+    }
+  } catch {}
+  const ta = document.createElement("textarea");
+  ta.value = text;
+  ta.style.position = "fixed";
+  ta.style.opacity = "0";
+  document.body.appendChild(ta);
+  ta.select();
+  document.execCommand("copy");
+  document.body.removeChild(ta);
+}
+
+function renderAnswer(target, event, asked) {
   target.hidden = false;
   target.replaceChildren();
 
+  const rows = Array.isArray(event.rows) ? event.rows : [];
   const wrap = document.createElement("div");
-  wrap.className = "workbench-results-container";
+  wrap.className = "result-card";
 
-  // 1. Top Meta Toolbar
-  const metaBar = document.createElement("div");
-  metaBar.className = "workbench-meta-bar";
+  if (asked) {
+    const q = document.createElement("div");
+    q.className = "result-question-block";
+    const qLabel = document.createElement("p");
+    qLabel.className = "result-kicker";
+    qLabel.textContent = "Question";
+    const qText = document.createElement("p");
+    qText.className = "result-question";
+    qText.textContent = asked;
+    q.append(qLabel, qText);
+    wrap.append(q);
+  }
 
-  const metaLeft = document.createElement("div");
-  metaLeft.className = "workbench-meta-left";
+  const head = document.createElement("div");
+  head.className = "result-head";
+  const titles = document.createElement("div");
+  const aLabel = document.createElement("p");
+  aLabel.className = "result-kicker";
+  aLabel.textContent = "Answer";
+  const count = document.createElement("p");
+  count.className = "result-count";
+  count.textContent = rows.length === 1 ? "1 row" : `${rows.length} rows`;
+  titles.append(aLabel, count);
 
-  const pathBadge = document.createElement("span");
-  pathBadge.className = "badge badge-indigo";
-  pathBadge.textContent = `PATH: ${String(event.path || "AUTO").toUpperCase()}`;
+  const actions = document.createElement("div");
+  actions.className = "result-actions";
 
-  const schemaBadge = document.createElement("span");
-  schemaBadge.className = "badge badge-emerald";
-  schemaBadge.textContent = summaryText(event.summary);
+  let sqlPanel = null;
+  if (event.sql || event.explanation) {
+    const sqlBtn = document.createElement("button");
+    sqlBtn.type = "button";
+    sqlBtn.className = "button button-sm ghost";
+    sqlBtn.textContent = "SQL";
+    sqlBtn.addEventListener("click", () => {
+      if (!sqlPanel) return;
+      const open = sqlPanel.hidden;
+      sqlPanel.hidden = !open;
+      sqlBtn.textContent = open ? "Hide SQL" : "SQL";
+    });
+    actions.append(sqlBtn);
+  }
 
-  metaLeft.append(pathBadge, schemaBadge);
-
-  const metaRight = document.createElement("div");
-  metaRight.className = "workbench-meta-right";
-
-  if (Array.isArray(event.rows) && event.rows.length > 0) {
+  if (rows.length > 0) {
     const exportBtn = document.createElement("button");
     exportBtn.type = "button";
     exportBtn.className = "button button-sm ghost export-csv-btn";
-    exportBtn.innerHTML = `
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-        <polyline points="7 10 12 15 17 10"></polyline>
-        <line x1="12" y1="15" x2="12" y2="3"></line>
-      </svg>
-      <span>Export CSV</span>
-    `;
+    exportBtn.textContent = "CSV";
     exportBtn.addEventListener("click", () => {
-      downloadCsv(event.rows, `querywell-results-${Date.now()}.csv`);
+      downloadCsv(rows, `querywell-results-${Date.now()}.csv`);
     });
-    metaRight.append(exportBtn);
+    actions.append(exportBtn);
   }
 
-  metaBar.append(metaLeft, metaRight);
-  wrap.append(metaBar);
+  head.append(titles, actions);
+  wrap.append(head);
 
-  // Hidden semantic DL for accessibility and legacy test hooks
-  const dl = document.createElement("dl");
-  dl.style.display = "none";
-  addAnswerRow(dl, "Path", textBlock("", event.path));
-  addAnswerRow(dl, "Schema", textBlock("", summaryText(event.summary)));
-  addAnswerRow(dl, "SQL", textBlock("sql", event.sql || ""));
-  addAnswerRow(dl, "Explanation", textBlock("explanation", event.explanation || ""));
-  if (Array.isArray(event.rows)) addAnswerRow(dl, "Rows", renderResultTable(event.rows));
-  wrap.append(dl);
-
-  // 2. Tab Navigation Strip
-  const tabsNav = document.createElement("div");
-  tabsNav.className = "workbench-tabs-nav";
-
-  const tabButtons = document.createElement("div");
-  tabButtons.className = "workbench-tab-buttons";
-
-  const rowCount = Array.isArray(event.rows) ? event.rows.length : 0;
-  const tabDataBtn = document.createElement("button");
-  tabDataBtn.type = "button";
-  tabDataBtn.className = "workbench-tab-btn active";
-  tabDataBtn.innerHTML = `
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
-    <span>Data Grid</span>
-    <span class="badge badge-subtle">${rowCount}</span>
-  `;
-
-  const tabSqlBtn = document.createElement("button");
-  tabSqlBtn.type = "button";
-  tabSqlBtn.className = "workbench-tab-btn";
-  tabSqlBtn.innerHTML = `
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>
-    <span>Generated SQL</span>
-  `;
-
-  const tabLogicBtn = document.createElement("button");
-  tabLogicBtn.type = "button";
-  tabLogicBtn.className = "workbench-tab-btn";
-  tabLogicBtn.innerHTML = `
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
-    <span>Query Logic</span>
-  `;
-
-  tabButtons.append(tabDataBtn, tabSqlBtn, tabLogicBtn);
-  tabsNav.append(tabButtons);
-  wrap.append(tabsNav);
-
-  // 3. Tab Panes
-  // Pane 1: Data Table
-  const paneData = document.createElement("div");
-  paneData.className = "workbench-tab-pane active";
-  paneData.append(renderResultTable(event.rows));
-
-  // Pane 2: Generated SQL Box
-  const paneSql = document.createElement("div");
-  paneSql.className = "workbench-tab-pane";
-  if (event.sql) {
-    const sqlCard = document.createElement("div");
-    sqlCard.className = "sql-container";
-
-    const sqlHeader = document.createElement("div");
-    sqlHeader.className = "sql-header";
-    const sqlTitle = document.createElement("span");
-    sqlTitle.textContent = "Generated Read-Only SQL";
-
-    const copyBtn = document.createElement("button");
-    copyBtn.type = "button";
-    copyBtn.className = "copy-sql-btn";
-    copyBtn.textContent = "Copy SQL";
-    copyBtn.addEventListener("click", async () => {
-      try {
-        if (navigator.clipboard && navigator.clipboard.writeText) {
-          await navigator.clipboard.writeText(event.sql);
-        } else {
-          throw new Error("Fallback");
-        }
-      } catch {
-        try {
-          const ta = document.createElement("textarea");
-          ta.value = event.sql;
-          ta.style.position = "fixed";
-          ta.style.opacity = "0";
-          document.body.appendChild(ta);
-          ta.focus();
-          ta.select();
-          document.execCommand("copy");
-          document.body.removeChild(ta);
-        } catch {}
-      }
-      copyBtn.textContent = "Copied!";
-      showToast("SQL query copied to clipboard", "success");
-      setTimeout(() => { copyBtn.textContent = "Copy SQL"; }, 2000);
-    });
-
-    sqlHeader.append(sqlTitle, copyBtn);
-
-    const code = document.createElement("pre");
-    code.className = "sql-code sql";
-    code.textContent = event.sql;
-
-    sqlCard.append(sqlHeader, code);
-    paneSql.append(sqlCard);
+  if (event.executeError) {
+    const failed = document.createElement("p");
+    failed.className = "result-error";
+    failed.textContent = event.executeError;
+    wrap.append(failed);
   }
 
-  // Pane 3: Query Logic
-  const paneLogic = document.createElement("div");
-  paneLogic.className = "workbench-tab-pane";
-  const explanationBox = document.createElement("div");
-  explanationBox.className = "explanation-box explanation";
-  explanationBox.textContent = event.explanation || "No explanation provided for this query.";
-  paneLogic.append(explanationBox);
-
-  // Tab switching logic
-  const tabs = [
-    { btn: tabDataBtn, pane: paneData },
-    { btn: tabSqlBtn, pane: paneSql },
-    { btn: tabLogicBtn, pane: paneLogic },
-  ];
-
-  tabs.forEach(({ btn, pane }) => {
-    btn.addEventListener("click", () => {
-      tabs.forEach((t) => {
-        t.btn.classList.remove("active");
-        t.pane.classList.remove("active");
+  if (event.sql || event.explanation) {
+    sqlPanel = document.createElement("div");
+    sqlPanel.className = "result-sql-panel";
+    sqlPanel.hidden = true;
+    if (event.sql) {
+      const code = document.createElement("pre");
+      code.className = "sql-code sql";
+      code.textContent = event.sql;
+      sqlPanel.append(code);
+      const copyBtn = document.createElement("button");
+      copyBtn.type = "button";
+      copyBtn.className = "copy-sql-btn";
+      copyBtn.style.margin = "0.75rem 0 0";
+      copyBtn.textContent = "Copy SQL";
+      copyBtn.addEventListener("click", async () => {
+        await copyText(event.sql);
+        copyBtn.textContent = "Copied";
+        setTimeout(() => { copyBtn.textContent = "Copy SQL"; }, 1600);
       });
-      btn.classList.add("active");
-      pane.classList.add("active");
-    });
-  });
+      sqlPanel.append(copyBtn);
+    }
+    if (event.explanation) {
+      const note = document.createElement("p");
+      note.className = "result-note explanation";
+      note.textContent = event.explanation;
+      sqlPanel.append(note);
+    }
+    wrap.append(sqlPanel);
+  }
 
-  wrap.append(paneData, paneSql, paneLogic);
+  const tableWrap = document.createElement("div");
+  tableWrap.className = "result-table-wrap";
+  tableWrap.append(renderResultTable(rows));
+  wrap.append(tableWrap);
+
   target.append(wrap);
 }
 
@@ -977,8 +904,11 @@ function showUsage(usage) {
   }
   line.hidden = false;
   line.textContent = usage.expired
-    ? "14-day trial ended"
-    : `${usage.used} of ${usage.limit} queries used this month.`;
+    ? "Trial ended"
+    : `${usage.used} of ${usage.limit}`;
+  line.title = usage.expired
+    ? "The 14-day trial has ended"
+    : `${usage.used} of ${usage.limit} queries used this month`;
 
   const fill = document.querySelector(".usage-bar-fill");
   if (fill && usage.limit > 0) {
@@ -991,23 +921,37 @@ if (page === "ask") {
   const form = document.querySelector("#ask-form");
   const answer = document.querySelector("#answer");
   const needConnect = document.querySelector("#need-connect");
+  const workspace = document.querySelector("#studio-workspace");
+  const empty = document.querySelector("#studio-empty");
+  const status = document.querySelector("#ask-status");
+  const questionEl = document.querySelector("#question");
+  const submitBtn = document.querySelector("#ask-submit");
 
-  // Query starter chips
-  document.querySelectorAll(".query-chip").forEach((chip) => {
+  function resizeQuestion() {
+    if (!questionEl) return;
+    questionEl.style.height = "auto";
+    questionEl.style.height = `${Math.min(questionEl.scrollHeight, 140)}px`;
+  }
+
+  function showWorkspace(indexed) {
+    if (needConnect) needConnect.hidden = indexed;
+    if (workspace) workspace.hidden = !indexed;
+    if (indexed) questionEl?.focus();
+  }
+
+  document.querySelectorAll(".studio-suggestion").forEach((chip) => {
     chip.addEventListener("click", () => {
-      const textarea = document.querySelector("#question");
-      if (textarea) {
-        textarea.value = chip.dataset.prompt || chip.textContent.trim();
-        textarea.focus();
-      }
+      if (!questionEl || !form) return;
+      questionEl.value = chip.dataset.prompt || chip.textContent.trim();
+      resizeQuestion();
+      form.requestSubmit();
     });
   });
 
-  // Ctrl/Cmd + Enter shortcut
-  const questionEl = document.querySelector("#question");
   if (questionEl && form) {
+    questionEl.addEventListener("input", resizeQuestion);
     questionEl.addEventListener("keydown", (e) => {
-      if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
+      if (e.key === "Enter" && !e.shiftKey) {
         e.preventDefault();
         form.requestSubmit();
       }
@@ -1029,8 +973,7 @@ if (page === "ask") {
       const response = await fetch("/api/connection");
       const body = response.ok ? await response.json() : { connection: null };
       const indexed = Boolean(body.connection?.plan);
-      if (needConnect) needConnect.hidden = indexed;
-      if (form) form.hidden = !indexed;
+      showWorkspace(indexed);
       const usageResponse = await fetch("/api/usage");
       const usage = usageResponse.ok ? await usageResponse.json() : null;
       if (usage) showUsage(usage);
@@ -1042,19 +985,23 @@ if (page === "ask") {
     form.addEventListener("submit", async (event) => {
       event.preventDefault();
       showError("");
-      const emptyState = document.querySelector("#studio-empty-state");
-      if (emptyState) emptyState.hidden = true;
-      const progress = document.querySelector("#progress");
-      if (progress) progress.replaceChildren();
-      if (answer) answer.hidden = true;
-      const button = form.querySelector("button");
-      button.disabled = true;
+      if (empty) empty.hidden = true;
+      if (answer) {
+        answer.hidden = true;
+        answer.replaceChildren();
+      }
+      if (status) status.hidden = false;
+      if (submitBtn) submitBtn.disabled = true;
       form.setAttribute("aria-busy", "true");
       try {
+        const asked = field("#question");
+        const payload = { question: asked };
+        const providerField = document.querySelector("#sql-provider");
+        if (providerField?.value) payload.provider = providerField.value;
         const response = await fetch("/api/ask", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ question: field("#question") }),
+          body: JSON.stringify(payload),
         });
         const type = response.headers.get("content-type") || "";
         if (!response.ok || !type.includes("ndjson")) {
@@ -1064,25 +1011,28 @@ if (page === "ask") {
         const events = await readEvents(response);
         let finished = false;
         for (const item of events) {
-          if (item.step === "status" && item.message) appendProgress(item.message);
           if (item.step === "error") throw new Error(item.message || "Could not answer that question.");
           if (item.step === "done") {
             finished = true;
-            if (emptyState) emptyState.hidden = true;
-            if (item.executeError) showError(item.executeError);
-            if (answer) renderAnswer(answer, item);
+            if (questionEl) {
+              questionEl.value = "";
+              questionEl.style.height = "";
+            }
+            if (answer) renderAnswer(answer, item, asked);
             showUsage(item);
           }
         }
         if (!finished) throw new Error("The question stopped before it finished.");
       } catch (err) {
         showError(err.message);
-        if (emptyState && !answer?.children.length) emptyState.hidden = false;
+        if (empty && answer && !answer.children.length) empty.hidden = false;
         const usageResponse = await fetch("/api/usage").catch(() => null);
         if (usageResponse?.ok) showUsage(await usageResponse.json());
       } finally {
-        button.disabled = false;
+        if (status) status.hidden = true;
+        if (submitBtn) submitBtn.disabled = false;
         form.removeAttribute("aria-busy");
+        questionEl?.focus();
       }
     });
   }

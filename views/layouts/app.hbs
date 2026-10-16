@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/app.css">
+  <link rel="stylesheet" href="/app.css?v=studio4">
 </head>
 <body class="app-body" data-page="{{default page (default activeTab 'ask')}}">
   <header class="app-header">
@@ -21,31 +21,7 @@
 
         <div class="header-divider"></div>
 
-        <div class="workspace-pill">
-          <span class="workspace-icon">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M3 21h18"></path>
-              <path d="M5 21V7l8-4v18"></path>
-              <path d="M19 21V11l-6-3"></path>
-              <rect x="9" y="9" width="1" height="1"></rect>
-              <rect x="9" y="13" width="1" height="1"></rect>
-              <rect x="9" y="17" width="1" height="1"></rect>
-            </svg>
-          </span>
-          <span class="workspace-name" id="account-workspace">{{default account.workspaceName "Workspace"}}</span>
-        </div>
-
-        {{#if connection}}
-          <div class="conn-pill conn-active" title="Connected to {{default connection.database connection.databaseName}} on {{connection.host}}">
-            <span class="conn-dot"></span>
-            <span class="conn-label"><code>{{connection.username}}@{{connection.host}}:{{connection.port}}/{{default connection.database connection.databaseName}}</code></span>
-          </div>
-        {{else}}
-          <a href="/connect" class="conn-pill conn-disconnected" title="Connect a database">
-            <span class="conn-dot"></span>
-            <span class="conn-label">No database connected</span>
-          </a>
-        {{/if}}
+        <div class="workspace-name" id="account-workspace">{{default account.workspaceName "Workspace"}}</div>
       </div>
 
       <div class="app-header-right">
@@ -66,6 +42,6 @@
 
   <div id="toast-container" class="toast-container" aria-live="polite"></div>
 
-  <script type="module" src="/app.js"></script>
+  <script type="module" src="/app.js?v=studio4"></script>
 </body>
 </html>

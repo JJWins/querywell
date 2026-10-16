@@ -16,9 +16,6 @@
           <line x1="6" y1="18" x2="6.01" y2="18"></line>
         </svg>
         <span>Database Source</span>
-        {{#if connection}}
-          <span class="tab-badge-dot"></span>
-        {{/if}}
       </a>
       <a href="/keys" class="tab-item {{#if (eq activeTab 'keys')}}active{{/if}}">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -38,12 +35,12 @@
     <div class="sub-nav-telemetry">
       <div class="usage-meter-group">
         <div class="usage-label-row">
-          <span class="usage-title">Plan Quota:</span>
-          <span id="usage" class="usage-count">
+          <span class="usage-title">Quota</span>
+          <span id="usage" class="usage-count" {{#if usage}}title="{{usage.used}} of {{usage.limit}} queries used this month"{{/if}}>
             {{#if usage}}
-              {{#if usage.expired}}14-day trial ended{{else}}{{usage.used}} of {{usage.limit}} queries{{/if}}
+              {{#if usage.expired}}Trial ended{{else}}{{usage.used}} of {{usage.limit}}{{/if}}
             {{else}}
-              Loading quota...
+              …
             {{/if}}
           </span>
         </div>

@@ -11,6 +11,7 @@ import { createQdrantClient } from "../index/qdrant.js";
 import { signin, signup } from "./accounts.js";
 import { createCheckoutSession, createPortalSession, handleStripeWebhook } from "../billing/stripe.js";
 import { askJsonBody, askQuestion, prefersJson, readUsage } from "./ask.js";
+import { sqlProviderChoices } from "../engine/models.js";
 import { indexConnection, readConnection } from "./connect.js";
 import { HttpError } from "./errors.js";
 import { renderView } from "./render.js";
@@ -101,7 +102,7 @@ async function sendFile(res, name) {
   res.writeHead(200, {
     "Content-Type": types[ext] || "application/octet-stream",
     "Content-Length": body.length,
-    "Cache-Control": "no-cache",
+    "Cache-Control": "no-store",
     "X-Content-Type-Options": "nosniff",
   });
   res.end(body);
@@ -206,6 +207,7 @@ export function createApp({ catalog, qdrant }) {
           account: accountJson(account),
           connection,
           usage,
+          sqlProviders: sqlProviderChoices(),
           activeTab: "ask",
         }, { layout: "app" });
         sendHtml(res, 200, html);

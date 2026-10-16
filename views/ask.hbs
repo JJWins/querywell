@@ -1,214 +1,65 @@
-<div class="studio-container">
-  <div class="page-title-row">
-    <div>
-      <h1 class="page-title">SQL Studio</h1>
-      <p class="page-desc">
-        Ask business and analytics questions in plain English. Querywell writes verified read-only SQL, executes against your database replica, and streams back live rows.
-      </p>
-    </div>
-    <div class="page-actions">
-      <a href="/connect" class="button ghost">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <ellipse cx="12" cy="5" rx="9" ry="3"></ellipse>
-          <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"></path>
-          <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path>
-        </svg>
-        <span>Database Settings</span>
-      </a>
+<div class="studio">
+  <div id="error" class="studio-banner" hidden></div>
+
+  <div id="need-connect" class="studio-canvas studio-empty {{#if connection}}hidden{{/if}}" {{#if connection}}hidden{{/if}}>
+    <div class="studio-empty-copy">
+      <h1 class="studio-empty-title">Connect a database first</h1>
+      <p class="studio-empty-text">SQL Studio asks this workspace’s indexed replica. Connect one on Database Source.</p>
+      <a href="/connect" class="button primary">Connect database</a>
     </div>
   </div>
 
-  <!-- Active Database Context Strip -->
-  {{#if connection}}
-    <div class="studio-context-strip">
-      <div class="context-item">
-        <span class="context-label">Connected Database</span>
-        <span class="context-value">
+  <div id="studio-workspace" class="studio-workspace" {{#unless connection}}hidden{{/unless}}>
+    <div class="studio-toolbar">
+      {{#if connection}}
+        <div class="studio-db" title="{{connection.host}}:{{connection.port}}">
           <span class="status-indicator-dot online"></span>
           <strong>{{default connection.database connection.databaseName}}</strong>
-          <code class="context-host">({{connection.host}}:{{connection.port}})</code>
-        </span>
-      </div>
+        </div>
+      {{else}}
+        <div class="studio-db">No database</div>
+      {{/if}}
 
-      <div class="context-divider"></div>
-
-      <div class="context-item">
-        <span class="context-label">Schema Volume</span>
-        <span class="context-value"><strong>{{formatNumber connection.schemaTextChars}}</strong> characters</span>
-      </div>
-
-      <div class="context-divider"></div>
-
-      <div class="context-item">
-        <span class="context-label">Routing Engine</span>
-        <span class="context-value">
-          {{#if (eq connection.path "small")}}
-            <span class="badge badge-indigo">Direct Full-Schema</span>
-          {{else if (eq connection.path "medium")}}
-            <span class="badge badge-indigo">Vector Retrieval</span>
-          {{else}}
-            <span class="badge badge-indigo">Multi-Module Index</span>
-          {{/if}}
-        </span>
-      </div>
-
-      <div class="context-divider"></div>
-
-      <div class="context-item">
-        <span class="context-label">Security Protocol</span>
-        <span class="context-value">
-          <span class="badge badge-emerald">Strict Read-Only</span>
-        </span>
-      </div>
-    </div>
-  {{/if}}
-
-  <div id="error" class="form-error" hidden></div>
-
-  <!-- Unconnected Alert -->
-  <div id="need-connect" class="panel alert-panel {{#if connection}}hidden{{/if}}" {{#if connection}}hidden{{/if}}>
-    <div class="alert-icon">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <circle cx="12" cy="12" r="10"></circle>
-        <line x1="12" y1="8" x2="12" y2="12"></line>
-        <line x1="12" y1="16" x2="12.01" y2="16"></line>
-      </svg>
-    </div>
-    <div class="alert-content">
-      <h4 class="alert-title">No database connected</h4>
-      <p class="alert-desc">You need to connect a read-only database replica and index its schema before asking questions.</p>
-    </div>
-    <a href="/connect" class="button button-sm primary">Connect Database Replica &rarr;</a>
-  </div>
-
-  <!-- Query Console Panel -->
-  <div class="panel studio-console-panel">
-    <form id="ask-form" class="ask-form" novalidate>
-      <div class="console-header">
-        <label for="question" class="console-label">
-          <span>Question / Prompt</span>
-          <span class="console-sublabel">Generates safe read-only SQL &bull; Zero row retention</span>
+      {{#if (gt sqlProviders.length 1)}}
+        <label class="model-picker" for="sql-provider">
+          <span>Model</span>
+          <select id="sql-provider" name="provider">
+            {{#each sqlProviders}}
+              <option value="{{id}}" {{#if selected}}selected{{/if}}>{{label}}</option>
+            {{/each}}
+          </select>
         </label>
-        <span class="badge badge-indigo">Auto-Routed</span>
-      </div>
+      {{/if}}
+    </div>
 
-      <div class="textarea-wrapper">
-        <textarea 
-          id="question" 
-          name="question" 
-          class="console-textarea" 
-          rows="3" 
-          placeholder="e.g. Which customers placed orders this month but haven't received fulfillment?" 
-          required
-        ></textarea>
-      </div>
-
-      <!-- Categorized Prompt Library -->
-      <div class="prompt-chips-section">
-        <div class="chips-category-group">
-          <span class="chips-category-label">Revenue &amp; Orders:</span>
-          <button type="button" class="query-chip" data-prompt="How many orders have a paid status?">
-            How many orders have a paid status?
-          </button>
-          <button type="button" class="query-chip" data-prompt="Which 5 customers generated the highest total revenue this quarter?">
-            Top 5 customers by revenue
-          </button>
-          <button type="button" class="query-chip" data-prompt="Show recent orders over $500 with customer name and status">
-            Orders over $500 with customer
-          </button>
+    <div class="studio-canvas" id="studio-canvas">
+      <div id="studio-empty" class="studio-empty">
+        <div class="studio-empty-copy">
+          <h1 class="studio-empty-title">Ask this database</h1>
+          <p class="studio-empty-text">Type a question below, or start with one of these.</p>
         </div>
-
-        <div class="chips-category-group">
-          <span class="chips-category-label">Customers &amp; Plans:</span>
-          <button type="button" class="query-chip" data-prompt="List 5 most recent orders with status">
-            List 5 most recent orders
-          </button>
-          <button type="button" class="query-chip" data-prompt="Count all customers and orders">
-            Count all customers and orders
-          </button>
-          <button type="button" class="query-chip" data-prompt="Show total subscriptions grouped by plan code">
-            Subscriptions by plan code
-          </button>
+        <div class="studio-suggestions">
+          <button type="button" class="studio-suggestion" data-prompt="How many orders have a paid status?">How many orders have a paid status?</button>
+          <button type="button" class="studio-suggestion" data-prompt="Which 5 customers generated the highest total revenue this quarter?">Top 5 customers by revenue</button>
+          <button type="button" class="studio-suggestion" data-prompt="List 5 most recent orders with status">Most recent orders</button>
+          <button type="button" class="studio-suggestion" data-prompt="Count all customers and orders">Count customers and orders</button>
         </div>
       </div>
 
-      <div class="console-footer">
-        <div class="shortcut-hint">
-          <kbd>Ctrl</kbd> + <kbd>Enter</kbd> to run
-        </div>
-        <button type="submit" class="button button-lg primary">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <line x1="22" y1="2" x2="11" y2="13"></line>
-            <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
-          </svg>
-          <span>Run Query</span>
-        </button>
-      </div>
+      <p id="ask-status" class="studio-asking" hidden>Asking…</p>
+      <div id="answer" class="studio-answer" hidden></div>
+    </div>
+
+    <form id="ask-form" class="studio-composer" novalidate>
+      <textarea
+        id="question"
+        name="question"
+        rows="1"
+        aria-label="Question"
+        placeholder="Ask a question about this database"
+        required
+      ></textarea>
+      <button id="ask-submit" type="submit" class="button primary">Ask</button>
     </form>
-  </div>
-
-  <!-- Realtime Stepper Timeline -->
-  <ol id="progress" class="stepper-list"></ol>
-
-  <!-- Query Results Workbench Card -->
-  <div id="answer" class="panel studio-results-panel" hidden></div>
-
-  <!-- Studio Empty State Guide (Visible before running a query) -->
-  <div id="studio-empty-state" class="panel studio-empty-panel">
-    <div class="empty-state-header">
-      <div class="empty-state-icon">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <polyline points="4 17 10 11 4 5"></polyline>
-          <line x1="12" y1="19" x2="20" y2="19"></line>
-        </svg>
-      </div>
-      <div>
-        <h3 class="empty-state-title">Ask Anything About Your Database</h3>
-        <p class="empty-state-desc">
-          Querywell translates conversational English into multi-table SQL queries, executes on your replica, and streams back verified rows.
-        </p>
-      </div>
-    </div>
-
-    <div class="empty-tips-grid">
-      <div class="tip-card">
-        <div class="tip-header-row">
-          <div class="tip-icon">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
-            </svg>
-          </div>
-          <h4 class="tip-title">Conversational Filters</h4>
-        </div>
-        <p class="tip-text">Specify dates, financial thresholds, or status codes directly (e.g. <em>"orders placed in Q3 2026 over $500"</em>).</p>
-      </div>
-
-      <div class="tip-card">
-        <div class="tip-header-row">
-          <div class="tip-icon">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="18" cy="18" r="3"></circle>
-              <circle cx="6" cy="6" r="3"></circle>
-              <path d="M13 6h3a2 2 0 0 1 2 2v7"></path>
-              <line x1="6" y1="9" x2="6" y2="21"></line>
-            </svg>
-          </div>
-          <h4 class="tip-title">Cross-Table Joins</h4>
-        </div>
-        <p class="tip-text">Querywell traverses primary and foreign keys automatically across customers, subscriptions, invoices, and logs.</p>
-      </div>
-
-      <div class="tip-card">
-        <div class="tip-header-row">
-          <div class="tip-icon">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
-            </svg>
-          </div>
-          <h4 class="tip-title">Zero Row Retention</h4>
-        </div>
-        <p class="tip-text">Schema metadata only is indexed. Returned customer rows stream straight to your browser with 1-click CSV export.</p>
-      </div>
-    </div>
   </div>
 </div>

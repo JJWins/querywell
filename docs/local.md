@@ -33,6 +33,14 @@ If port 1112 is already in use, stop that process before `npm start`.
 | Password | `Phase2Account9` |
 | Workspace | Phase2 Desk |
 
+Local admin. Same sign-in page. The workspace is on the Scale plan, so the 14-day trial and the 30-question cap do not apply.
+
+| Field | Value |
+|---|---|
+| Email | `admin@querywell.local` |
+| Password | `Admin-Ufvz09Pq6r5j` |
+| Workspace | Admin |
+
 Same catalog on local and beta. Trial is 30 questions over 14 days. Create API keys at `/keys`.
 
 ## Demo MySQL

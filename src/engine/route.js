@@ -4,6 +4,7 @@ import { assertEngineContext, openSourcePool } from "../db/source.js";
 import { planForPath } from "../billing/plans.js";
 import { answerBasic } from "./basic.js";
 import { answerAdvanced, retrieveAnswerContext } from "./advanced.js";
+import { resolveSqlProvider } from "./models.js";
 import { executeWithRetries } from "./sql.js";
 
 export const SMALL_MAX_CHARS = 30000;
@@ -58,7 +59,7 @@ async function answerMedium(question, ctx, stored, log) {
       fewshots: prepared.fewshots,
       termLinks: prepared.termLinks,
       log,
-      options: { fullSchema: false, path: "medium", onPrompt: ctx.onPrompt },
+      options: { fullSchema: false, path: "medium", onPrompt: ctx.onPrompt, provider: ctx.provider },
       sourcePool,
     });
     return {
@@ -104,7 +105,8 @@ export async function answerQuestion(question, ctx, log = () => {}) {
     `schema text ${stored.text.length} characters, path ${path}, plan ${plan.code}`
   );
 
-  const withSchema = { ...ctx, storedSchema: stored };
+  const sqlModel = resolveSqlProvider(ctx.provider);
+  const withSchema = { ...ctx, storedSchema: stored, provider: sqlModel.id };
   let result;
   if (path === "small") result = await answerBasic(question, withSchema, log);
   else if (path === "medium") result = await answerMedium(question, withSchema, stored, log);
@@ -113,6 +115,9 @@ export async function answerQuestion(question, ctx, log = () => {}) {
   return {
     ...result,
     path,
+    provider: sqlModel.id,
+    model: sqlModel.model,
+    modelLabel: sqlModel.label,
     schema_text_chars: stored.text.length,
     plan,
     schemaMs: catalogSchemaMs + (Number(result.schemaMs) || 0),

@@ -27,7 +27,7 @@ export async function answerBasic(question, ctx, log = () => {}) {
       fewshots: [],
       termLinks: "",
       log,
-      options: { fullSchema: true, onPrompt: ctx.onPrompt },
+      options: { fullSchema: true, onPrompt: ctx.onPrompt, provider: ctx.provider },
       sourcePool,
     });
     return {

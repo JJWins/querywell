@@ -12,12 +12,13 @@ import {
   SMALL_MAX_CHARS,
   answerQuestion,
 } from "../src/engine/route.js";
-import { isSafeSelect, withLimit } from "../src/engine/sql.js";
+import { resolveSqlProvider } from "../src/engine/models.js";
+import { isSafeSelect, runReadOnlySelect, withLimit } from "../src/engine/sql.js";
 import { loadFewshotExamples } from "../src/index/data/load.js";
 import { ingestConnection } from "../src/index/ingest.js";
 import { loadStoredSchema } from "../src/index/schema.js";
 import { loadTableCatalog } from "../src/index/data/load.js";
-import { assertReadOnly } from "../src/index/readonly.js";
+import { assertReadOnly, grantsAreReadOnly } from "../src/index/readonly.js";
 import { EMBEDDING_DIM } from "../src/index/embed.js";
 import {
   createQdrantClient,
@@ -58,8 +59,42 @@ function unitChecks() {
   assert(isSafeSelect("SELECT id FROM orders"), "select is allowed");
   assert(!isSafeSelect("SELECT id FROM orders; DELETE FROM orders"), "multi-statement blocked");
   assert(!isSafeSelect("DELETE FROM orders"), "delete blocked");
+  assert(!isSafeSelect("INSERT INTO orders (id) VALUES (1)"), "insert blocked");
+  assert(!isSafeSelect("UPDATE orders SET status_code = 'x'"), "update blocked");
   assert(!isSafeSelect("SELECT * FROM orders INTO OUTFILE '/tmp/x'"), "outfile blocked");
-  assert(withLimit("SELECT id FROM orders").endsWith("LIMIT 100"), "limit applied");
+  assert(!isSafeSelect("/*!50000 INSERT INTO orders (id) VALUES (1) */"), "versioned insert blocked");
+  assert(!isSafeSelect("WITH x AS (SELECT 1) DELETE FROM orders"), "cte delete blocked");
+  assert(isSafeSelect("SELECT REPLACE(desk_name, '_', ' ') FROM customers"), "replace function allowed");
+  assert(!isSafeSelect("SELECT id FROM orders FOR UPDATE"), "for update blocked");
+  assert(!grantsAreReadOnly(["GRANT SELECT, INSERT ON `db`.* TO `u`@`localhost`"]), "insert grant rejected");
+  assert(
+    grantsAreReadOnly([
+      "GRANT USAGE ON *.* TO `u`@`localhost`",
+      "GRANT SELECT ON `db`.* TO `u`@`localhost`",
+    ]),
+    "select grant accepted"
+  );
+  const sqlModel = resolveSqlProvider();
+  assert(sqlModel.id === "anthropic", "claude stays the default sql provider");
+  assert(sqlModel.model === (process.env.ANTHROPIC_MODEL || "claude-sonnet-4-6"), "claude model id");
+  let unknownProvider = false;
+  try {
+    resolveSqlProvider("nope");
+  } catch {
+    unknownProvider = true;
+  }
+  assert(unknownProvider, "unknown sql provider rejected");
+  if (!String(process.env.GEMINI_API_KEY || "").trim()) {
+    let missingGemini = false;
+    try {
+      resolveSqlProvider("gemini");
+    } catch (err) {
+      missingGemini = /GEMINI_API_KEY/.test(err.message);
+    }
+    assert(missingGemini, "gemini without a key is rejected");
+  }
+
+  assert(withLimit("SELECT id FROM orders").endsWith("\nLIMIT 100"), "limit applied");
   assert(!/limit/i.test(withLimit("SELECT COUNT(*) FROM orders")), "count keeps no extra limit");
 
   const compact = appendCompactTableNames("Table: orders\n  - id (int)", ["zz_schema_pad"]);
@@ -322,6 +357,34 @@ async function main() {
       assert(rejected, "a writable MySQL user was accepted");
     } finally {
       await writer.end();
+    }
+
+    const writePool = mysql.createPool({
+      host: catalogConfig().host,
+      port: catalogConfig().port,
+      user: catalogConfig().user,
+      password: catalogConfig().password,
+      database: PROOF_DB,
+      connectionLimit: 2,
+      multipleStatements: false,
+    });
+    try {
+      let txnDenied = false;
+      try {
+        await runReadOnlySelect(
+          writePool,
+          `INSERT INTO customers (id, desk_name) VALUES (99, 'Blocked')`
+        );
+      } catch {
+        txnDenied = true;
+      }
+      assert(txnDenied, "read-only transaction allowed an insert");
+      const [leaked] = await writePool.query(
+        `SELECT COUNT(*) AS n FROM customers WHERE id = 99`
+      );
+      assert(Number(leaked[0].n) === 0, "insert leaked through a read-only transaction");
+    } finally {
+      await writePool.end();
     }
 
     const source = {

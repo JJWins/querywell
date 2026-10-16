@@ -15,6 +15,7 @@ export function sourceConfig(config) {
     password: config.password,
     database: ident(config.database, "database name"),
     connectionLimit: 2,
+    connectTimeout: 10000,
     multipleStatements: false,
   };
 }

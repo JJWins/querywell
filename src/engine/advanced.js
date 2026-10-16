@@ -562,7 +562,7 @@ export async function answerAdvanced(question, ctx, log = () => {}) {
       fewshots: prepared.fewshots,
       termLinks: prepared.termLinks,
       log,
-      options: { fullSchema: false, onPrompt: ctx.onPrompt },
+      options: { fullSchema: false, onPrompt: ctx.onPrompt, provider: ctx.provider },
       sourcePool,
     });
     return packResult(question, prepared, executed);

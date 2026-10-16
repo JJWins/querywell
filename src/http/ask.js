@@ -1,6 +1,7 @@
 import { questionLimitForPlan, trialEndsAt, trialHasEnded } from "../billing/plans.js";
 import { decryptSecret } from "../db/crypto.js";
 import { sourceConfig } from "../db/source.js";
+import { resolveSqlProvider } from "../engine/models.js";
 import { answerQuestion } from "../engine/route.js";
 import { HttpError } from "./errors.js";
 
@@ -74,6 +75,8 @@ export function askJsonBody(question, done) {
     columns: rows[0] ? Object.keys(rows[0]) : [],
     rows,
     explanation: done.explanation || "",
+    provider: done.provider || null,
+    model: done.model || null,
     telemetry: {
       schema_ms: Number(done.schemaMs) || 0,
       synthesis_ms: Number(done.synthesisMs) || 0,
@@ -133,6 +136,12 @@ export async function askQuestion({ catalog, qdrant, workspaceId, body, onEvent 
   const question = String(body?.question || "").trim();
   if (!question) throw new HttpError(400, "Enter a question.");
   if (question.length > 2000) throw new HttpError(400, "Question is too long.");
+  let sqlModel;
+  try {
+    sqlModel = resolveSqlProvider(body?.provider);
+  } catch (err) {
+    throw new HttpError(400, err.message);
+  }
 
   const [rows] = await catalog.execute(
     `SELECT id, host, port, database_name, username, password_ciphertext, schema_text_chars
@@ -180,6 +189,7 @@ export async function askQuestion({ catalog, qdrant, workspaceId, body, onEvent 
         catalog,
         qdrant,
         source,
+        provider: sqlModel.id,
       },
       (message) => onEvent({ step: "status", message: String(message) })
     );
@@ -190,10 +200,13 @@ export async function askQuestion({ catalog, qdrant, workspaceId, body, onEvent 
 
   await recordUsage(catalog, workspaceId, Number(row.id), result);
   const after = await readUsage(catalog, workspaceId);
-  console.log(`ask workspace=${workspaceId} path=${result.path}`);
+  console.log(`ask workspace=${workspaceId} path=${result.path} model=${result.model}`);
   onEvent({
     step: "done",
     path: result.path,
+    provider: result.provider,
+    model: result.model,
+    modelLabel: result.modelLabel,
     schemaTextChars: result.schema_text_chars,
     summary: answerSummary(result),
     sql: result.executed_sql || result.query || null,
