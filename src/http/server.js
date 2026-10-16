@@ -15,19 +15,33 @@ import { sqlProviderChoices } from "../engine/models.js";
 import { indexConnection, readConnection } from "./connect.js";
 import { HttpError } from "./errors.js";
 import { renderView } from "./render.js";
+import { HOME_DESCRIPTION, HOME_TITLE, pageMeta } from "./site.js";
 
 const publicDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../public");
 const assets = {
   "/app.css": "app.css",
   "/app.js": "app.js",
   "/QueryWell_Logo.png": "QueryWell_Logo.png",
+  "/og-image.png": "og-image.png",
+  "/robots.txt": "robots.txt",
 };
 const types = {
   ".html": "text/html; charset=utf-8",
   ".css": "text/css; charset=utf-8",
   ".js": "text/javascript; charset=utf-8",
   ".png": "image/png",
+  ".txt": "text/plain; charset=utf-8",
 };
+const cachedAssets = new Set(["og-image.png", "robots.txt"]);
+const HEAD = Symbol("head");
+
+function endBody(res, payload) {
+  if (res[HEAD]) {
+    res.end();
+    return;
+  }
+  res.end(payload);
+}
 
 function sendHtml(res, status, html, extraHeaders = {}) {
   const payload = Buffer.from(html, "utf8");
@@ -38,7 +52,7 @@ function sendHtml(res, status, html, extraHeaders = {}) {
     "X-Content-Type-Options": "nosniff",
     ...extraHeaders,
   });
-  res.end(payload);
+  endBody(res, payload);
 }
 
 function sendJson(res, status, body, extraHeaders = {}) {
@@ -50,7 +64,7 @@ function sendJson(res, status, body, extraHeaders = {}) {
     "X-Content-Type-Options": "nosniff",
     ...extraHeaders,
   });
-  res.end(payload);
+  endBody(res, payload);
 }
 
 function redirect(res, location) {
@@ -102,10 +116,10 @@ async function sendFile(res, name) {
   res.writeHead(200, {
     "Content-Type": types[ext] || "application/octet-stream",
     "Content-Length": body.length,
-    "Cache-Control": "no-store",
+    "Cache-Control": cachedAssets.has(name) ? "public, max-age=86400" : "no-store",
     "X-Content-Type-Options": "nosniff",
   });
-  res.end(body);
+  endBody(res, body);
 }
 
 function accountJson(account) {
@@ -120,58 +134,74 @@ export function createApp({ catalog, qdrant }) {
   return async function handle(req, res) {
     const url = new URL(req.url || "/", "http://127.0.0.1");
     const pathname = url.pathname;
+    const method = req.method === "HEAD" ? "GET" : req.method;
+    if (req.method === "HEAD") res[HEAD] = true;
     try {
-      if (req.method === "GET" && pathname === "/") {
+      if (method === "GET" && pathname === "/") {
         const account = await sessionAccount(catalog, req.headers.cookie);
         if (account) {
           redirect(res, "/ask");
           return;
         }
-        const html = await renderView("home", {
-          title: "Querywell — Ask your database in plain English",
-        }, { layout: "main" });
+        const html = await renderView("home", pageMeta({
+          title: HOME_TITLE,
+          description: HOME_DESCRIPTION,
+          pathname: "/",
+        }), { layout: "main" });
         sendHtml(res, 200, html);
         return;
       }
 
-      if (req.method === "GET" && pathname === "/signin") {
+      if (method === "GET" && pathname === "/signin") {
         const account = await sessionAccount(catalog, req.headers.cookie);
         if (account) {
           redirect(res, "/ask");
           return;
         }
         const html = await renderView("signin", {
-          title: "Sign In — Querywell",
+          ...pageMeta({
+            title: "Sign In — QueryWell",
+            description: "Sign in to QueryWell to open your workspace, connected database, and SQL Studio.",
+            pathname: "/signin",
+          }),
           page: "signin",
         }, { layout: "main" });
         sendHtml(res, 200, html);
         return;
       }
 
-      if (req.method === "GET" && pathname === "/docs") {
+      if (method === "GET" && pathname === "/docs") {
         const html = await renderView("docs", {
-          title: "Ask API — Querywell",
+          ...pageMeta({
+            title: "Ask API — QueryWell",
+            description: "Send a plain-English question. QueryWell writes a read-only SELECT, runs it on the workspace database, and returns the SQL with the rows.",
+            pathname: "/docs",
+          }),
           page: "docs",
         }, { layout: "main" });
         sendHtml(res, 200, html);
         return;
       }
 
-      if (req.method === "GET" && pathname === "/signup") {
+      if (method === "GET" && pathname === "/signup") {
         const account = await sessionAccount(catalog, req.headers.cookie);
         if (account) {
           redirect(res, "/connect");
           return;
         }
         const html = await renderView("signup", {
-          title: "Create Your Workspace — Querywell",
+          ...pageMeta({
+            title: "Create Your Workspace — QueryWell",
+            description: "Create a QueryWell workspace. 14-day trial with 30 questions, one MySQL database, and no credit card.",
+            pathname: "/signup",
+          }),
           page: "signup",
         }, { layout: "main" });
         sendHtml(res, 200, html);
         return;
       }
 
-      if (req.method === "GET" && pathname === "/connect") {
+      if (method === "GET" && pathname === "/connect") {
         const account = await sessionAccount(catalog, req.headers.cookie);
         if (!account) {
           redirect(res, "/signin");
@@ -192,7 +222,7 @@ export function createApp({ catalog, qdrant }) {
         return;
       }
 
-      if (req.method === "GET" && pathname === "/ask") {
+      if (method === "GET" && pathname === "/ask") {
         const account = await sessionAccount(catalog, req.headers.cookie);
         if (!account) {
           redirect(res, "/signin");
@@ -214,7 +244,7 @@ export function createApp({ catalog, qdrant }) {
         return;
       }
 
-      if (req.method === "GET" && pathname === "/keys") {
+      if (method === "GET" && pathname === "/keys") {
         const account = await sessionAccount(catalog, req.headers.cookie);
         if (!account) {
           redirect(res, "/signin");
@@ -237,7 +267,7 @@ export function createApp({ catalog, qdrant }) {
         return;
       }
 
-      if (req.method === "GET" && assets[pathname]) {
+      if (method === "GET" && assets[pathname]) {
         await sendFile(res, assets[pathname]);
         return;
       }
